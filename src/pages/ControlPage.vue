@@ -115,6 +115,38 @@
               <option value="light">Hell</option>
             </select>
           </div>
+          
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Projektor-Fenster</label>
+            <div class="grid grid-cols-2 gap-2 mb-2">
+              <button 
+                class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                @click="setProjectorWindow('primary')"
+              >
+                Hauptbildschirm
+              </button>
+              <button 
+                class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                @click="setProjectorWindow('secondary')"
+              >
+                Zweiter Bildschirm
+              </button>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button 
+                class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                @click="setProjectorWindow('fullscreen')"
+              >
+                Vollbild
+              </button>
+              <button 
+                class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                @click="setProjectorWindow('custom')"
+              >
+                Benutzerdefiniert
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -159,6 +191,7 @@ import ControlPanel from '@/components/ControlPanel.vue';
 import HotkeyLegend from '@/components/HotkeyLegend.vue';
 import { Song, Verse } from '@/features/songs/song.types';
 import { splitVerseIntoSlides } from '@/utils/slideUtils';
+import { openProjectorWindow, sendMessageToProjector } from '@/utils/projection';
 
 const route = useRoute();
 const projectionStore = useProjectionStore();
@@ -230,27 +263,10 @@ const openProjectorWindow = () => {
   const songId = route.query.songId as string | undefined;
   const setlistId = route.query.setlistId as string | undefined;
   
-  let url = '/projector';
-  const params = new URLSearchParams();
-  
-  if (songId) {
-    params.append('songId', songId);
-  }
-  
-  if (setlistId) {
-    params.append('setlistId', setlistId);
-  }
-  
-  if (params.toString()) {
-    url += `?${params.toString()}`;
-  }
-  
-  projectorWindow.value = window.open(url, 'projector', 'width=1024,height=768');
-  
-  // Fokus auf das neue Fenster setzen
-  if (projectorWindow.value) {
-    projectorWindow.value.focus();
-  }
+  projectorWindow.value = openProjectorWindow({
+    songId,
+    setlistId
+  });
 };
 
 const handleNext = () => {
@@ -296,6 +312,48 @@ const jumpToSong = (songId: string) => {
       type: 'jumpToSong',
       songId
     }, '*');
+  }
+};
+
+// Projektor-Fenster-Einstellungen
+const setProjectorWindow = (type: 'primary' | 'secondary' | 'fullscreen' | 'custom') => {
+  let windowFeatures = '';
+  
+  switch (type) {
+    case 'primary':
+      // Standardfenster auf dem Hauptbildschirm
+      windowFeatures = 'width=1024,height=768';
+      break;
+    case 'secondary':
+      // Fenster auf dem zweiten Bildschirm (angenommen, der Hauptbildschirm ist 1920px breit)
+      windowFeatures = 'width=1024,height=768,left=1920,top=0';
+      break;
+    case 'fullscreen':
+      // Vollbild-Fenster (maximiert)
+      windowFeatures = 'width=' + window.screen.width + ',height=' + window.screen.height + ',top=0,left=0';
+      break;
+    case 'custom':
+      // Benutzerdefinierte Einstellung - hier könnte ein Dialog geöffnet werden
+      // Für jetzt verwenden wir eine einfache Eingabe
+      const width = prompt('Breite des Fensters:', '1024') || '1024';
+      const height = prompt('Höhe des Fensters:', '768') || '768';
+      const left = prompt('Position von links:', '0') || '0';
+      const top = prompt('Position von oben:', '0') || '0';
+      windowFeatures = `width=${width},height=${height},left=${left},top=${top}`;
+      break;
+  }
+  
+  // Speichere die Einstellungen für die nächste Sitzung
+  localStorage.setItem('projectorWindowFeatures', windowFeatures);
+  
+  // Wenn ein Projektor-Fenster bereits geöffnet ist, schließe es und öffne es neu
+  if (projectorWindow.value && !projectorWindow.value.closed) {
+    const url = projectorWindow.value.location.href;
+    projectorWindow.value.close();
+    projectorWindow.value = window.open(url, 'projector', windowFeatures);
+    if (projectorWindow.value) {
+      projectorWindow.value.focus();
+    }
   }
 };
 
