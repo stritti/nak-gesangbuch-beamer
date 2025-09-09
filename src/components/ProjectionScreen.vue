@@ -44,14 +44,15 @@
       <slot name="footer"></slot>
     </div>
     
-    <!-- Strophennummern-Navigation -->
-    <div v-if="!blackout && extractedVerseNumbers.length > 0" class="absolute bottom-0 left-0 right-0 p-4 flex justify-center gap-3 opacity-50">
+    <!-- Strophennummern-Navigation (unten links) -->
+    <div v-if="!blackout && extractedVerseNumbers.length > 0" class="absolute bottom-0 left-0 p-4 flex flex-wrap gap-2 opacity-50 max-w-xs">
       <button 
         v-for="(verseNum, idx) in extractedVerseNumbers" 
         :key="verseNum"
         class="verse-number px-2 py-1 rounded-full text-sm"
         :class="{ 'active': idx === currentVerseIndex }"
         @click="jumpToVerse(idx)"
+        :title="`Zu Strophe ${verseNum} springen`"
       >
         {{ verseNum }}
       </button>
