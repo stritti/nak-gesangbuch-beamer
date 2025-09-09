@@ -518,15 +518,5 @@ const afterLeave = () => {
   height: 60px;
 }
 
-.high-contrast .nak-logo {
-  filter: brightness(0) invert(1);
-}
-
-.light .nak-logo {
-  filter: brightness(0);
-}
-
-.dark .nak-logo {
-  filter: brightness(0) invert(1);
-}
+/* Keine Filter für das Logo mehr nötig, da es jetzt mit eigenen Farben kommt */
 </style>
