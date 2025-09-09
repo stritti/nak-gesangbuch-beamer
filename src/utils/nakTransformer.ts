@@ -20,7 +20,7 @@ type NAKSongInternal = {
   topics?: string[];
 };
 
-// Typguard-Funktion, um zu prüfen, ob ein Objekt dem NAKSongInternal-Typ entspricht
+// Typguard-Funktion wird in transformNAKSong verwendet
 function isNAKSongInternal(obj: unknown): obj is NAKSongInternal {
   return (
     typeof obj === 'object' &&
@@ -120,9 +120,12 @@ export function transformNAKSongs(nakData: unknown): Song[] {
     
     // Spezialfall: Prüfe, ob nakData selbst ein einzelnes Lied ist
     try {
-      if ((nakData.title || nakData.number) && (nakData.verses || nakData.text)) {
+      if (isNAKSongInternal(nakData) || 
+          (typeof nakData === 'object' && 
+           nakData !== null && 
+           ((nakData.title || nakData.number) && (nakData.verses || nakData.text)))) {
         console.log('NAK-Daten scheinen ein einzelnes Lied zu sein');
-        const song = transformNAKSong(nakData);
+        const song = transformNAKSong(nakData as Record<string, unknown>);
         return [song];
       }
     } catch (error) {
