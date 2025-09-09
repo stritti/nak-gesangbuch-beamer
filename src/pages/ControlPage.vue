@@ -191,7 +191,7 @@ import ControlPanel from '@/components/ControlPanel.vue';
 import HotkeyLegend from '@/components/HotkeyLegend.vue';
 import { Song, Verse } from '@/features/songs/song.types';
 import { splitVerseIntoSlides } from '@/utils/slideUtils';
-import { openProjectorWindow, sendMessageToProjector } from '@/utils/projection';
+import { openProjectorWindow, sendMessageToProjector, isProjectorOpen, getProjectorWindow } from '@/utils/projection';
 import { useProjection } from '@/composables/useProjection';
 
 const route = useRoute();
@@ -261,7 +261,7 @@ const openProjector = () => {
   const setlistId = route.query.setlistId as string | undefined;
   
   // Prüfe, ob bereits ein Projektorfenster existiert
-  const isOpen = isProjectorOpen();
+  const isOpen = isProjectorWindowOpen();
   
   if (songId) {
     projectorWindow.value = projectSongToWindow(songId);
@@ -357,7 +357,7 @@ const setProjectorWindow = (type: 'primary' | 'secondary' | 'fullscreen' | 'cust
   localStorage.setItem('projectorWindowFeatures', windowFeatures);
   
   // Prüfe, ob bereits ein Projektorfenster existiert
-  const isOpen = isProjectorOpen();
+  const isOpen = isProjectorWindowOpen();
   
   if (isOpen) {
     // Wenn ein Projektor-Fenster bereits geöffnet ist, aktualisiere es mit den neuen Einstellungen
