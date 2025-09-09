@@ -357,7 +357,7 @@ const setProjectorWindow = (type: 'primary' | 'secondary' | 'fullscreen' | 'cust
   localStorage.setItem('projectorWindowFeatures', windowFeatures);
   
   // Prüfe, ob bereits ein Projektorfenster existiert
-  const isOpen = isProjectorWindowOpen();
+  const isOpen = isProjectorOpen();
   
   if (isOpen) {
     // Wenn ein Projektor-Fenster bereits geöffnet ist, aktualisiere es mit den neuen Einstellungen
