@@ -214,6 +214,47 @@ const handleStorageChange = (event: StorageEvent) => {
 // Referenz für das Interval
 let checkInterval: number | null = null;
 
+// Prüfe, ob die Seite in einem eigenen Fenster geöffnet ist
+const checkIfInOwnWindow = () => {
+  // Wenn wir nicht in einem eigenen Fenster sind, öffnen wir uns selbst in einem neuen Fenster
+  if (window.opener === null && window.parent === window && !window.name.includes('projector_window')) {
+    // Speichere die aktuelle URL mit allen Parametern
+    const url = window.location.href;
+    
+    // Prüfe, ob bereits ein Projektorfenster existiert
+    const existingWindow = window.open('', 'projector_window');
+    
+    if (existingWindow && !existingWindow.closed) {
+      // Wenn ein Fenster existiert, navigiere es zu unserer URL
+      existingWindow.location.href = url;
+      existingWindow.focus();
+    } else {
+      // Sonst öffne ein neues Fenster
+      const windowFeatures = localStorage.getItem('projectorWindowFeatures') || 'width=1024,height=768';
+      const newWindow = window.open(url, 'projector_window', windowFeatures);
+      
+      if (newWindow) {
+        newWindow.focus();
+      }
+    }
+    
+    // Leite zur Startseite weiter oder schließe das aktuelle Fenster
+    try {
+      window.close();
+    } catch (e) {
+      // Falls das Schließen nicht funktioniert, leiten wir zur Startseite weiter
+      window.location.href = '/';
+    }
+    
+    return false;
+  }
+  
+  // Registriere dieses Fenster als das aktive Projektorfenster
+  window.name = 'projector_window';
+  
+  return true;
+};
+
 // Zur Startseite navigieren
 const navigateHome = () => {
   // Fenster schließen oder zur Startseite navigieren
@@ -230,6 +271,11 @@ const navigateHome = () => {
 
 // Lade das Lied basierend auf der URL oder der Setlist
 onMounted(async () => {
+  // Prüfe zuerst, ob wir in einem eigenen Fenster sind
+  if (!checkIfInOwnWindow()) {
+    return; // Wenn nicht, brechen wir ab, da wir uns in einem neuen Fenster öffnen
+  }
+  
   // Setze den Projektor zurück
   projectionStore.reset();
 
