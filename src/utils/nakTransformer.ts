@@ -4,7 +4,8 @@
  */
 import { Song, Verse } from '@/features/songs/song.types';
 
-interface NAKSong {
+// Interface für die Struktur eines NAK-Songs (wird in der Transformation verwendet)
+interface NAKSongStructure {
   id: string;
   number: string;
   title: string;
@@ -21,7 +22,7 @@ interface NAKSong {
 /**
  * Transformiert NAK-Gesangbuch-Daten in unser internes Format
  */
-export function transformNAKSongs(nakData: any): Song[] {
+export function transformNAKSongs(nakData: unknown): Song[] {
   console.log('Transformiere NAK-Daten, Format:', typeof nakData, Array.isArray(nakData) ? 'Array' : 'Nicht-Array');
   
   // Spezialfall: Wenn nakData ein String ist, versuche es als JSON zu parsen
@@ -124,7 +125,7 @@ export function transformNAKSongs(nakData: any): Song[] {
 /**
  * Transformiert ein einzelnes NAK-Lied in unser internes Format
  */
-export function transformNAKSong(nakSong: any): Song {
+export function transformNAKSong(nakSong: Record<string, unknown>): Song {
   console.log('Transformiere Lied:', nakSong.number || nakSong.id || 'unbekannt');
   
   // Prüfe, ob das Lied die erforderlichen Eigenschaften hat
@@ -133,7 +134,8 @@ export function transformNAKSong(nakSong: any): Song {
   }
   
   // Spezialfall für 'buecher' Objekt, das kein Lied ist
-  if (nakSong.hasOwnProperty('buecher') || nakSong.hasOwnProperty('books')) {
+  if (Object.prototype.hasOwnProperty.call(nakSong, 'buecher') || 
+      Object.prototype.hasOwnProperty.call(nakSong, 'books')) {
     throw new Error('Metadaten-Objekt, kein Lied');
   }
   
@@ -159,7 +161,7 @@ export function transformNAKSong(nakSong: any): Song {
     } 
     // Format: {verses: [{id: "1", lines: ["Zeile 1", "Zeile 2"]}, {id: "2", lines: ["Zeile 3", "Zeile 4"]}]}
     else if (Array.isArray(nakSong.verses)) {
-      verses = nakSong.verses.map((verse: any) => {
+      verses = nakSong.verses.map((verse: Record<string, unknown>) => {
         if (typeof verse === 'object' && verse.id && verse.lines) {
           return {
             id: String(verse.id),
@@ -199,7 +201,7 @@ export function transformNAKSong(nakSong: any): Song {
         lines: Array.isArray(lines) ? lines : [String(lines)]
       }));
     } else if (Array.isArray(strophen)) {
-      verses = strophen.map((strophe: any, index: number) => {
+      verses = strophen.map((strophe: unknown, index: number) => {
         if (typeof strophe === 'object' && strophe.id && strophe.lines) {
           return {
             id: String(strophe.id),

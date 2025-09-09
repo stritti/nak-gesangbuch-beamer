@@ -5,9 +5,6 @@ import { transformNakDataset } from './nak.parser';
 import * as idb from '@/utils/idb';
 import { readFileAsText } from '@/utils/file';
 
-// JSON-Schema importieren
-import nakSchema from './nak.schema.json';
-
 /**
  * Repository für den Import, die Validierung und Persistenz von NAK-Daten
  */
@@ -41,9 +38,9 @@ export class NakRepository {
       this.importProgress.value = 20;
 
       // JSON parsen
-      let nakData: any;
+      let nakData: NakDataset;
       try {
-        nakData = JSON.parse(content);
+        nakData = JSON.parse(content) as NakDataset;
       } catch (error) {
         throw new Error(`Die Datei enthält kein gültiges JSON: ${error instanceof Error ? error.message : String(error)}`);
       }
@@ -104,8 +101,6 @@ export class NakRepository {
         version: nakData.version,
         errors: this.importErrors.value
       };
-    } catch (error) {
-      throw error;
     } finally {
       this.isImporting.value = false;
     }

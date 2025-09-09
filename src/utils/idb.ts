@@ -3,16 +3,16 @@ import { openDB, DBSchema, IDBPDatabase } from 'idb';
 interface AppDB extends DBSchema {
   songs: {
     key: string;
-    value: any;
+    value: Record<string, unknown>;
     indexes: { 'by-title': string };
   };
   books: {
     key: string;
-    value: any;
+    value: Record<string, unknown>;
   };
   setlists: {
     key: string;
-    value: any;
+    value: Record<string, unknown>;
   };
 }
 
