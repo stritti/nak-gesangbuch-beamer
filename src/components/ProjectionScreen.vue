@@ -134,28 +134,10 @@ const extractedVerseNumbers = computed(() => {
   return Array.from({ length: props.slides.length }, (_, i) => String(i + 1));
 });
 
-// Berechne den aktuellen Strophenindex basierend auf dem currentIndex
+// Der aktuelle Strophenindex ist jetzt direkt der currentIndex,
+// da jede Strophe genau einem Slide entspricht
 const currentVerseIndex = computed(() => {
-  if (!props.slides.length) return 0;
-  
-  // Berechne, zu welcher Strophe der aktuelle Slide gehört
-  let slideCount = 0;
-  for (let i = 0; i < props.slides.length; i++) {
-    const verse = props.slides[i];
-    if (!verse) continue;
-    
-    // Berechne, wie viele Slides für diese Strophe benötigt werden
-    const slidesForVerse = Math.ceil(verse.length / props.maxLinesPerSlide);
-    
-    // Wenn der aktuelle Index in diesem Bereich liegt, ist dies die aktuelle Strophe
-    if (props.currentIndex < slideCount + slidesForVerse) {
-      return i;
-    }
-    
-    slideCount += slidesForVerse;
-  }
-  
-  return 0;
+  return props.currentIndex;
 });
 
 // Aktuelle Strophennummer für die Anzeige
@@ -176,32 +158,13 @@ const currentSlide = computed(() => {
   // Sicherstellen, dass der Index im gültigen Bereich liegt
   const index = Math.min(props.currentIndex, props.slides.length - 1);
   
-  // Slide zurückgeben
-  const slide = props.slides[index];
-  
-  // Wenn der Slide zu viele Zeilen hat, teilen wir ihn auf
-  if (slide && slide.length > props.maxLinesPerSlide) {
-    // In diesem Fall zeigen wir nur die ersten maxLinesPerSlide Zeilen an
-    // Die restlichen Zeilen werden in nachfolgenden Slides angezeigt
-    return slide.slice(0, props.maxLinesPerSlide);
-  }
-  
-  return slide;
+  // Slide zurückgeben (komplette Strophe)
+  return props.slides[index];
 });
 
-// Hilfsfunktion, um die Gesamtzahl der Slides zu berechnen
+// Die Gesamtzahl der Slides ist jetzt gleich der Anzahl der Strophen
 const totalSlides = computed(() => {
-  if (!props.slides || props.slides.length === 0) return 0;
-  
-  // Zähle die Anzahl der Slides, die durch Aufteilung entstehen
-  let count = 0;
-  for (const slide of props.slides) {
-    // Berechne, wie viele Slides für diesen Vers benötigt werden
-    const slidesNeeded = Math.ceil(slide.length / props.maxLinesPerSlide);
-    count += slidesNeeded;
-  }
-  
-  return count;
+  return props.slides.length;
 });
 
 // Methode zur Anpassung der Schriftgröße basierend auf dem Inhalt
@@ -251,19 +214,8 @@ const handleKeydown = (e: KeyboardEvent) => {
 const jumpToVerse = (verseIndex: number) => {
   if (verseIndex < 0 || verseIndex >= props.slides.length) return;
   
-  // Berechne den Slide-Index für die gewählte Strophe
-  let slideIndex = 0;
-  for (let i = 0; i < verseIndex; i++) {
-    const verse = props.slides[i];
-    if (!verse) continue;
-    
-    // Berechne, wie viele Slides für diese Strophe benötigt werden
-    const slidesForVerse = Math.ceil(verse.length / props.maxLinesPerSlide);
-    slideIndex += slidesForVerse;
-  }
-  
-  // Springe zu diesem Slide
-  emit('jump-to-verse', slideIndex);
+  // Da jede Strophe genau einem Slide entspricht, ist der Slide-Index gleich dem Strophen-Index
+  emit('jump-to-verse', verseIndex);
 };
 
 const toggleFullscreen = async () => {
