@@ -34,9 +34,12 @@ export class SongRepository {
     try {
       // Versuche zuerst, die NAK-Gesangbuch-Datei zu laden
       try {
+        console.log(`Versuche NAK-Gesangbuch zu laden von: ${this.songsDataPath}/nakbuch_v5.4.0.json`);
         const nakResponse = await fetch(`${this.songsDataPath}/nakbuch_v5.4.0.json`);
         if (nakResponse.ok) {
+          console.log('NAK-Gesangbuch-Datei erfolgreich geladen');
           const nakData = await nakResponse.json();
+          console.log('NAK-Gesangbuch-Daten erfolgreich geparst');
           
           try {
             // Transformiere die NAK-Daten in unser Format
@@ -52,6 +55,8 @@ export class SongRepository {
           } catch (transformError) {
             console.error('Fehler beim Transformieren der NAK-Daten:', transformError);
           }
+        } else {
+          console.warn(`NAK-Gesangbuch konnte nicht geladen werden: ${nakResponse.status} ${nakResponse.statusText}`);
         }
       } catch (nakError) {
         console.warn('NAK-Gesangbuch konnte nicht geladen werden, versuche Standard-Datei:', nakError);
