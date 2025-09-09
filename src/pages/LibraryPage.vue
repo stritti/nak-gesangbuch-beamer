@@ -9,13 +9,6 @@
       >
         {{ songStore.loading ? 'Wird geladen...' : 'Lieder importieren' }}
       </button>
-      <button
-        class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-        @click="loadFromDataPath"
-        :disabled="songStore.loading"
-      >
-        Aus Datenpfad laden
-      </button>
       <router-link to="/" class="text-blue-600 hover:underline self-center ml-2">
         Zurück zur Startseite
       </router-link>
@@ -132,25 +125,6 @@ const importSongs = async () => {
   }
 };
 
-// Lade Lieder aus dem konfigurierten Datenpfad
-const loadFromDataPath = async () => {
-  try {
-    songStore.loading = true;
-    const results = await songRepository.loadSongsFromDataPath();
-    
-    if (results.valid.length > 0) {
-      // Füge die geladenen Lieder zum Store hinzu
-      songStore.songs = [...songStore.songs, ...results.valid];
-      filteredSongs.value = songStore.songs;
-    }
-    
-    importResults.value = results;
-  } catch (error) {
-    console.error('Fehler beim Laden der Lieder aus dem Datenpfad:', error);
-  } finally {
-    songStore.loading = false;
-  }
-};
 
 // Suche nach Liedern
 const performSearch = async () => {
