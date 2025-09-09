@@ -21,13 +21,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useProjectionStore } from '@/features/projection/projection.store';
 import { useSongStore } from '@/features/songs/song.store';
 import { useSetlistStore } from '@/features/setlist/setlist.store';
 import ProjectionScreen from '@/components/ProjectionScreen.vue';
 import { Song, Verse } from '@/features/songs/song.types';
+import { splitVerseIntoSlides } from '@/utils/slideUtils';
 
 const route = useRoute();
 const projectionStore = useProjectionStore();
@@ -66,13 +67,20 @@ const prepareSlides = (song: Song | null) => {
     if (!verse) continue;
 
     // Teile die Zeilen in Slides auf
-    for (let i = 0; i < verse.lines.length; i += maxLinesPerSlide) {
-      const slideLines = verse.lines.slice(i, i + maxLinesPerSlide);
-      allSlides.push(slideLines);
-    }
+    const verseSlides = splitVerseIntoSlides(verse.lines, maxLinesPerSlide);
+    allSlides.push(...verseSlides);
   }
 
   slides.value = allSlides;
+  
+  // Informiere das Steuerungsfenster über die Anzahl der Slides
+  if (window.opener) {
+    window.opener.postMessage({
+      type: 'slidesUpdated',
+      totalSlides: allSlides.length,
+      currentSongId: song.id
+    }, '*');
+  }
 };
 
 // Lade das Lied basierend auf der URL oder der Setlist
@@ -102,6 +110,37 @@ onMounted(async () => {
       }
     }
   }
+  
+  // Event-Listener für Nachrichten vom Steuerungsfenster
+  const handleMessage = (event: MessageEvent) => {
+    // Hier können wir weitere Nachrichten vom Steuerungsfenster verarbeiten
+    if (event.data && event.data.type === 'requestState') {
+      // Sende den aktuellen Zustand zurück
+      if (window.opener) {
+        window.opener.postMessage({
+          type: 'projectorState',
+          isFullscreen: document.fullscreenElement !== null,
+          currentIndex: projectionStore.currentIndex,
+          totalSlides: slides.value.length,
+          currentSongId: currentSong.value?.id
+        }, '*');
+      }
+    }
+  };
+  
+  window.addEventListener('message', handleMessage);
+  
+  // Informiere das Steuerungsfenster, dass der Projektor bereit ist
+  if (window.opener) {
+    window.opener.postMessage({
+      type: 'projectorReady'
+    }, '*');
+  }
+  
+  // Cleanup
+  onUnmounted(() => {
+    window.removeEventListener('message', handleMessage);
+  });
 });
 
 // Überwache den aktuellen Index und schalte auf Blackout, wenn das Ende erreicht ist

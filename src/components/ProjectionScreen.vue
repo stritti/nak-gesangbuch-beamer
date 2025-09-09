@@ -193,11 +193,28 @@ onMounted(() => {
     // Auf Größenänderungen reagieren
     window.addEventListener('resize', adjustFontSize);
     
+    // Event-Listener für Nachrichten vom Steuerungsfenster
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'toggleFullscreen') {
+        toggleFullscreen();
+        // Sende Bestätigung zurück
+        if (window.opener) {
+          window.opener.postMessage({
+            type: 'fullscreenChange',
+            isFullscreen: document.fullscreenElement !== null
+          }, '*');
+        }
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
+    
     // Cleanup
     onUnmounted(() => {
       unbind();
       projectionService.releaseWakeLock().catch(console.error);
       window.removeEventListener('resize', adjustFontSize);
+      window.removeEventListener('message', handleMessage);
     });
   }
 });
