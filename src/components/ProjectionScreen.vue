@@ -86,7 +86,33 @@ const currentSlide = computed(() => {
   
   // Sicherstellen, dass der Index im gültigen Bereich liegt
   const index = Math.min(props.currentIndex, props.slides.length - 1);
-  return props.slides[index];
+  
+  // Slide zurückgeben
+  const slide = props.slides[index];
+  
+  // Wenn der Slide zu viele Zeilen hat, teilen wir ihn auf
+  if (slide && slide.length > props.maxLinesPerSlide) {
+    // In diesem Fall zeigen wir nur die ersten maxLinesPerSlide Zeilen an
+    // Die restlichen Zeilen werden in nachfolgenden Slides angezeigt
+    return slide.slice(0, props.maxLinesPerSlide);
+  }
+  
+  return slide;
+});
+
+// Hilfsfunktion, um die Gesamtzahl der Slides zu berechnen
+const totalSlides = computed(() => {
+  if (!props.slides || props.slides.length === 0) return 0;
+  
+  // Zähle die Anzahl der Slides, die durch Aufteilung entstehen
+  let count = 0;
+  for (const slide of props.slides) {
+    // Berechne, wie viele Slides für diesen Vers benötigt werden
+    const slidesNeeded = Math.ceil(slide.length / props.maxLinesPerSlide);
+    count += slidesNeeded;
+  }
+  
+  return count;
 });
 
 // Methode zur Anpassung der Schriftgröße basierend auf dem Inhalt
