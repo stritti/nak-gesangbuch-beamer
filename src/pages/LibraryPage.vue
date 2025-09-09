@@ -56,15 +56,20 @@
       <p v-else>Keine Lieder in der Bibliothek. Importieren Sie Lieder oder laden Sie sie aus dem Datenpfad.</p>
     </div>
 
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <SongCard
-        v-for="song in filteredSongs"
-        :key="song.id"
-        :song="song"
-        @view="viewSongDetails"
-        @add="addToSetlist"
-        @project="projectSong"
-      />
+    <div v-else>
+      <div class="mb-4 text-gray-600">
+        {{ filteredSongs.length }} Lieder gefunden
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <SongCard
+          v-for="song in filteredSongs"
+          :key="song.id"
+          :song="song"
+          @view="viewSongDetails"
+          @add="addToSetlist"
+          @project="projectSong"
+        />
+      </div>
     </div>
   </div>
 </template>

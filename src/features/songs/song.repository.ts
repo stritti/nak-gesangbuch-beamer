@@ -5,6 +5,7 @@ import * as idb from '@/utils/idb';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import songSchema from './song.schema.json';
+import { transformNAKSongs } from '@/utils/nakTransformer';
 
 // Initialisiere JSON Schema Validator
 const ajv = new Ajv();
@@ -27,8 +28,23 @@ export class SongRepository {
    */
   async loadSongsFromDataPath(): Promise<{ valid: Song[]; invalid: { file: string; errors: string[] }[] }> {
     try {
-      // Hier würden wir normalerweise die Dateien aus dem Pfad lesen
-      // Da wir im Browser sind, müssen wir einen Fetch-Request machen
+      // Versuche zuerst, die NAK-Gesangbuch-Datei zu laden
+      try {
+        const nakResponse = await fetch(`${this.songsDataPath}/nakbuch_v5.4.0.json`);
+        if (nakResponse.ok) {
+          const nakData = await nakResponse.json();
+          
+          // Transformiere die NAK-Daten in unser Format
+          const transformedSongs = transformNAKSongs(nakData);
+          
+          // Validiere die transformierten Lieder
+          return this.validateSongs(transformedSongs, 'nakbuch_v5.4.0.json');
+        }
+      } catch (nakError) {
+        console.warn('NAK-Gesangbuch konnte nicht geladen werden, versuche Standard-Datei:', nakError);
+      }
+      
+      // Fallback: Versuche die Standard-Datei zu laden
       const response = await fetch(`${this.songsDataPath}/songs.json`);
       if (!response.ok) {
         throw new Error(`Fehler beim Laden der Lieder: ${response.statusText}`);
