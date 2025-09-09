@@ -46,6 +46,35 @@ export const useSongStore = defineStore('song', {
       this.loading = true;
       this.error = null;
       try {
+        // Prüfen, ob es sich um eine NAK-Datei handeln könnte
+        const nakFile = files.find(file => 
+          file.name.toLowerCase().includes('nakbuch') || 
+          file.name.toLowerCase().includes('nak')
+        );
+        
+        if (nakFile) {
+          // Wenn es eine NAK-Datei ist, verwende das NAK-Repository
+          try {
+            // Dynamischer Import des NAK-Repositories
+            const { nakRepository } = await import('@/features/ingest/nak.repository');
+            const result = await nakRepository.importNakFile(nakFile);
+            
+            // Lade alle Songs neu
+            await this.loadSongs();
+            
+            return {
+              valid: result.songs,
+              invalid: [],
+              nakImport: true,
+              version: result.version
+            };
+          } catch (error) {
+            console.error('NAK-Import fehlgeschlagen, versuche Standard-Import:', error);
+            // Fallback zum Standard-Import
+          }
+        }
+        
+        // Standard-Import für andere JSON-Dateien
         const result = await songRepository.importSongs(files);
         // Füge neue Lieder zum Store hinzu
         this.songs = [...this.songs, ...result.valid];

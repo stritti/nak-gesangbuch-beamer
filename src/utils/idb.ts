@@ -6,6 +6,10 @@ interface AppDB extends DBSchema {
     value: any;
     indexes: { 'by-title': string };
   };
+  books: {
+    key: string;
+    value: any;
+  };
   setlists: {
     key: string;
     value: any;
@@ -25,6 +29,11 @@ async function getDb(): Promise<IDBPDatabase<AppDB>> {
       if (!db.objectStoreNames.contains('songs')) {
         const songsStore = db.createObjectStore('songs', { keyPath: 'id' });
         songsStore.createIndex('by-title', 'title');
+      }
+      
+      // Books-Store
+      if (!db.objectStoreNames.contains('books')) {
+        db.createObjectStore('books', { keyPath: 'id' });
       }
       
       // Setlists-Store
