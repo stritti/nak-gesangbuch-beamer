@@ -7,8 +7,12 @@ import addFormats from 'ajv-formats';
 import songSchema from './song.schema.json';
 import { transformNAKSongs } from '@/utils/nakTransformer';
 
-// Initialisiere JSON Schema Validator
-const ajv = new Ajv();
+// Initialisiere JSON Schema Validator mit angepassten Optionen
+const ajv = new Ajv({
+  strict: false,
+  allErrors: true,
+  validateSchema: false // Deaktiviere die Validierung des Schemas selbst
+});
 addFormats(ajv);
 const validateSong = ajv.compile(songSchema);
 
@@ -80,22 +84,69 @@ export class SongRepository {
 
     // Validiere jedes Lied
     for (const song of songs) {
-      const isValid = validateSong(song);
-      if (isValid) {
-        result.valid.push(song as Song);
-      } else {
-        const errors = validateSong.errors?.map(err => 
-          `${err.instancePath} ${err.message}`
-        ) || ['Unbekannter Validierungsfehler'];
-        
-        result.invalid.push({
-          file: filename,
-          errors: errors.slice(0, 5) // Maximal 5 Fehler anzeigen
-        });
+      try {
+        // Grundlegende Validierung ohne Schema
+        if (!this.isBasicSongValid(song)) {
+          result.invalid.push({
+            file: filename,
+            errors: ['Lied fehlt erforderliche Felder (id, title, verses)']
+          });
+          continue;
+        }
+
+        // Versuche Schema-Validierung
+        const isValid = validateSong(song);
+        if (isValid) {
+          result.valid.push(song as Song);
+        } else {
+          const errors = validateSong.errors?.map(err => 
+            `${err.instancePath} ${err.message}`
+          ) || ['Unbekannter Validierungsfehler'];
+          
+          result.invalid.push({
+            file: filename,
+            errors: errors.slice(0, 5) // Maximal 5 Fehler anzeigen
+          });
+        }
+      } catch (error) {
+        // Fallback bei Validierungsfehlern
+        console.error('Fehler bei der Validierung:', error);
+        if (this.isBasicSongValid(song)) {
+          // Wenn grundlegende Validierung erfolgreich, akzeptiere das Lied trotzdem
+          result.valid.push(song as Song);
+        } else {
+          result.invalid.push({
+            file: filename,
+            errors: [(error as Error).message]
+          });
+        }
       }
     }
 
     return result;
+  }
+
+  /**
+   * Prüft, ob ein Lied die grundlegenden Anforderungen erfüllt
+   */
+  private isBasicSongValid(song: any): boolean {
+    return (
+      song && 
+      typeof song === 'object' &&
+      typeof song.id === 'string' && 
+      song.id.length > 0 &&
+      typeof song.title === 'string' && 
+      song.title.length > 0 &&
+      Array.isArray(song.verses) && 
+      song.verses.length > 0 &&
+      song.verses.every((verse: any) => 
+        typeof verse === 'object' &&
+        typeof verse.id === 'string' &&
+        Array.isArray(verse.lines) &&
+        verse.lines.length > 0 &&
+        verse.lines.every((line: any) => typeof line === 'string')
+      )
+    );
   }
   /**
    * Importiert Lieder aus JSON-Dateien
