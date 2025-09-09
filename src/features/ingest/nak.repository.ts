@@ -1,6 +1,4 @@
 import { ref } from 'vue';
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
 import type { NakDataset } from './nak.types';
 import type { Song } from '@/features/songs/song.types';
 import { transformNakDataset } from './nak.parser';
@@ -18,14 +16,9 @@ export class NakRepository {
   public isImporting = ref(false);
   public importProgress = ref(0);
   public importErrors = ref<Array<{ path: string; message: string }>>([]);
-  
-  private ajv: Ajv;
 
   constructor() {
-    // AJV für Schema-Validierung initialisieren
-    this.ajv = new Ajv({ allErrors: true });
-    addFormats(this.ajv);
-    this.ajv.compile(nakSchema);
+    // Keine AJV-Initialisierung mehr
   }
 
   /**
@@ -56,31 +49,44 @@ export class NakRepository {
       }
       this.importProgress.value = 40;
 
-      // Schema validieren
-      const validate = this.ajv.compile<NakDataset>(nakSchema);
-      const isValid = validate(nakData);
+      // Einfache Validierung ohne AJV
+      if (!nakData.version || !nakData.buecher || !nakData.lieder) {
+        throw new Error('Die Datei enthält nicht die erforderlichen Felder (version, buecher, lieder)');
+      }
       
-      if (!isValid && validate.errors) {
-        // Fehler sammeln (max. 10, nur erste pro Pfad)
-        const uniqueErrors = new Map<string, string>();
-        
-        for (const error of validate.errors) {
-          const path = error.instancePath || '/';
-          if (!uniqueErrors.has(path)) {
-            uniqueErrors.set(path, error.message || 'Unbekannter Fehler');
-          }
-          
-          if (uniqueErrors.size >= 10) break;
+      if (!Array.isArray(nakData.buecher) || !Array.isArray(nakData.lieder)) {
+        throw new Error('Die Felder "buecher" und "lieder" müssen Arrays sein');
+      }
+      
+      // Prüfe, ob die Version mit 5.x.y beginnt
+      if (!/^5\.\d+\.\d+$/.test(nakData.version)) {
+        throw new Error(`Ungültige Version: ${nakData.version} (erwartet: 5.x.y)`);
+      }
+      
+      // Einfache Validierung der ersten paar Lieder (max. 10 Fehler)
+      const errors: Array<{ path: string; message: string }> = [];
+      
+      for (let i = 0; i < Math.min(10, nakData.lieder.length); i++) {
+        const lied = nakData.lieder[i];
+        if (!lied.buchId) {
+          errors.push({ path: `/lieder/${i}`, message: 'Feld "buchId" fehlt' });
+        }
+        if (!lied.nummer) {
+          errors.push({ path: `/lieder/${i}`, message: 'Feld "nummer" fehlt' });
+        }
+        if (!lied.title) {
+          errors.push({ path: `/lieder/${i}`, message: 'Feld "title" fehlt' });
+        }
+        if (!lied.text) {
+          errors.push({ path: `/lieder/${i}`, message: 'Feld "text" fehlt' });
         }
         
-        this.importErrors.value = Array.from(uniqueErrors.entries()).map(([path, message]) => ({ 
-          path, 
-          message 
-        }));
-        
-        if (this.importErrors.value.length > 0) {
-          throw new Error(`Die Datei entspricht nicht dem NAK-Schema (${this.importErrors.value.length} Fehler)`);
-        }
+        if (errors.length >= 10) break;
+      }
+      
+      if (errors.length > 0) {
+        this.importErrors.value = errors;
+        throw new Error(`Die Datei entspricht nicht dem NAK-Schema (${errors.length} Fehler)`);
       }
       
       this.importProgress.value = 60;
