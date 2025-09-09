@@ -50,7 +50,6 @@ const prepareSlides = (song: Song | null) => {
   }
 
   currentSong.value = song;
-  const maxLinesPerSlide = projectionStore.maxLinesPerSlide;
   const allSlides: string[][] = [];
 
   // Bestimme die Reihenfolge der Verse
@@ -69,9 +68,8 @@ const prepareSlides = (song: Song | null) => {
 
     if (!verse) continue;
 
-    // Teile die Zeilen in Slides auf
-    const verseSlides = splitVerseIntoSlides(verse.lines, maxLinesPerSlide);
-    allSlides.push(...verseSlides);
+    // Jede Strophe wird als ein kompletter Slide hinzugefügt
+    allSlides.push(verse.lines);
   }
 
   slides.value = allSlides;
