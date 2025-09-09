@@ -11,9 +11,10 @@
       <div 
         class="text-center max-w-4xl"
         :style="{ 
-          fontSize: `${fontSize}px`, 
+          fontSize: `${computedFontSize}px`, 
           lineHeight: lineHeight 
         }"
+        ref="contentRef"
       >
         <div v-if="currentSlide" class="slide-content">
           <p 
@@ -38,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { bindHotkeys } from '@/utils/hotkeys';
 import { projectionService } from '@/features/projection/projection.service';
 
@@ -73,13 +74,49 @@ const emit = defineEmits<{
 
 // Refs
 const projectionRef = ref<HTMLElement | null>(null);
+const contentRef = ref<HTMLElement | null>(null);
+const computedFontSize = ref(props.fontSize);
 
 // Computed
 const currentSlide = computed(() => {
   if (!props.slides.length) return null;
+  
+  // Wenn keine Slides vorhanden sind, leeren Array zurückgeben
+  if (props.slides.length === 0) return null;
+  
+  // Sicherstellen, dass der Index im gültigen Bereich liegt
   const index = Math.min(props.currentIndex, props.slides.length - 1);
   return props.slides[index];
 });
+
+// Methode zur Anpassung der Schriftgröße basierend auf dem Inhalt
+const adjustFontSize = async () => {
+  if (!projectionRef.value || !contentRef.value || !currentSlide.value) return;
+  
+  // Warten auf das nächste Rendering
+  await nextTick();
+  
+  const containerHeight = projectionRef.value.clientHeight - 100; // Abzüglich Padding
+  const containerWidth = projectionRef.value.clientWidth - 100;
+  
+  // Starten mit der vorgegebenen Schriftgröße
+  let fontSize = props.fontSize;
+  contentRef.value.style.fontSize = `${fontSize}px`;
+  
+  // Überprüfen, ob der Inhalt in den Container passt
+  while (
+    (contentRef.value.scrollHeight > containerHeight || 
+     contentRef.value.scrollWidth > containerWidth) && 
+    fontSize > 30
+  ) {
+    // Schriftgröße schrittweise verkleinern
+    fontSize -= 5;
+    contentRef.value.style.fontSize = `${fontSize}px`;
+  }
+  
+  // Aktualisiere die berechnete Schriftgröße
+  computedFontSize.value = fontSize;
+};
 
 // Methods
 const handleKeydown = (e: KeyboardEvent) => {
@@ -91,9 +128,13 @@ const toggleFullscreen = async () => {
     if (!document.fullscreenElement) {
       await projectionService.requestFullscreen(projectionRef.value);
       emit('fullscreen', true);
+      // Nach dem Wechsel in den Vollbildmodus die Schriftgröße anpassen
+      setTimeout(adjustFontSize, 100);
     } else {
       await projectionService.exitFullscreen();
       emit('fullscreen', false);
+      // Nach dem Verlassen des Vollbildmodus die Schriftgröße anpassen
+      setTimeout(adjustFontSize, 100);
     }
   }
 };
@@ -112,10 +153,17 @@ onMounted(() => {
     // Wake-Lock aktivieren
     projectionService.requestWakeLock().catch(console.error);
     
+    // Schriftgröße anpassen
+    adjustFontSize();
+    
+    // Auf Größenänderungen reagieren
+    window.addEventListener('resize', adjustFontSize);
+    
     // Cleanup
     onUnmounted(() => {
       unbind();
       projectionService.releaseWakeLock().catch(console.error);
+      window.removeEventListener('resize', adjustFontSize);
     });
   }
 });
@@ -126,4 +174,14 @@ watch(() => projectionRef.value, (el) => {
     el.focus();
   }
 });
+
+// Schriftgröße anpassen, wenn sich der Slide ändert
+watch(() => props.currentIndex, () => {
+  nextTick(() => adjustFontSize());
+});
+
+// Schriftgröße anpassen, wenn sich die Slides ändern
+watch(() => props.slides, () => {
+  nextTick(() => adjustFontSize());
+}, { deep: true });
 </script>
