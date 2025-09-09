@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.projection {
+  @apply w-screen h-screen overflow-hidden select-none;
+}
+.projection.high-contrast { @apply bg-black text-white; }
+.projection.light         { @apply bg-white text-black; }
+.projection.dark          { @apply bg-gray-900 text-gray-100; }
