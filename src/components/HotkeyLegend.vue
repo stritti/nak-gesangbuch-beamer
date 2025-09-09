@@ -12,15 +12,14 @@
   </div>
 </template>
 
-<script setup lang="ts">
-// Props
-interface Hotkey {
+<script lang="ts">
+// Define the interface and default hotkeys in a normal script block
+export interface Hotkey {
   key: string;
   description: string;
 }
 
-// Define the default hotkeys as a constant outside of props
-const DEFAULT_HOTKEYS: Hotkey[] = [
+export const DEFAULT_HOTKEYS: Hotkey[] = [
   { key: '←', description: 'Vorheriger Slide' },
   { key: '→', description: 'Nächster Slide' },
   { key: 'B', description: 'Blackout ein/aus' },
@@ -28,11 +27,15 @@ const DEFAULT_HOTKEYS: Hotkey[] = [
   { key: '.', description: 'Nächster Slide (alternativ)' },
   { key: ',', description: 'Vorheriger Slide (alternativ)' }
 ];
+</script>
 
-// Use withDefaults with a static value instead of a function reference
+<script setup lang="ts">
+import { Hotkey, DEFAULT_HOTKEYS } from './HotkeyLegend.vue';
+
+// Now we can use the exported constants in defineProps
 const props = withDefaults(defineProps<{
   hotkeys?: Hotkey[];
 }>(), {
-  hotkeys: DEFAULT_HOTKEYS
+  hotkeys: () => DEFAULT_HOTKEYS
 });
 </script>
