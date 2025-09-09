@@ -6,6 +6,10 @@
     @keydown="handleKeydown"
     ref="projectionRef"
   >
+    <!-- NAK Logo in der rechten oberen Ecke -->
+    <div class="nak-logo-container">
+      <img src="@/assets/nak-logo.svg" alt="NAK Logo" class="nak-logo" />
+    </div>
     <div v-if="blackout" class="w-full h-full bg-black"></div>
     <div v-else class="flex flex-col h-full p-8">
       <!-- Liedtitel und Nummer -->
@@ -493,5 +497,36 @@ const afterLeave = () => {
 
 .dark .verse-indicator {
   color: rgba(255, 255, 255, 0.8);
+}
+
+/* Styling für das NAK-Logo */
+.nak-logo-container {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+  opacity: 0.3;
+  transition: opacity 0.3s ease;
+}
+
+.nak-logo-container:hover {
+  opacity: 0.5;
+}
+
+.nak-logo {
+  width: 50px;
+  height: 50px;
+}
+
+.high-contrast .nak-logo {
+  filter: brightness(0) invert(1);
+}
+
+.light .nak-logo {
+  filter: brightness(0);
+}
+
+.dark .nak-logo {
+  filter: brightness(0) invert(1);
 }
 </style>
