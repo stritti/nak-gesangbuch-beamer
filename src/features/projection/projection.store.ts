@@ -60,14 +60,5 @@ export const useProjectionStore = defineStore('projection', {
     }
   },
   
-  persist: {
-    enabled: true,
-    strategies: [
-      {
-        key: 'projection-settings',
-        storage: localStorage,
-        paths: ['fontSize', 'lineHeight', 'theme', 'maxLinesPerSlide']
-      }
-    ]
-  }
+  persist: true
 });

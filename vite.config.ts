@@ -1,10 +1,14 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
 import { resolve } from 'path';
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  // Lade Umgebungsvariablen
+  const env = loadEnv(mode, process.cwd(), '');
+  
+  return {
   plugins: [
     vue(),
     VitePWA({
@@ -44,5 +48,10 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true
+  },
+  // Stelle Umgebungsvariablen für die App bereit
+  define: {
+    'process.env.SONGS_DATA_PATH': JSON.stringify(env.VITE_SONGS_DATA_PATH || '/data')
   }
+  };
 });

@@ -1,0 +1,49 @@
+[
+  {
+    "id": "example-001",
+    "number": "001",
+    "title": "Beispiel-Lied 1",
+    "language": "de",
+    "verses": [
+      { "id": "1", "lines": ["Dies ist die erste Zeile", "Dies ist die zweite Zeile", "Dies ist die dritte Zeile"] },
+      { "id": "2", "lines": ["Dies ist die vierte Zeile", "Dies ist die fünfte Zeile", "Dies ist die sechste Zeile"] }
+    ],
+    "refrain": { "id": "R", "lines": ["Dies ist der Refrain, Zeile 1", "Dies ist der Refrain, Zeile 2"] },
+    "verseOrder": ["1", "R", "2", "R"]
+  },
+  {
+    "id": "example-002",
+    "number": "002",
+    "title": "Beispiel-Lied 2",
+    "language": "de",
+    "authors": ["Beispiel Autor"],
+    "topics": ["Beispiel", "Test"],
+    "verses": [
+      { "id": "1", "lines": ["Erste Strophe, Zeile 1", "Erste Strophe, Zeile 2"] },
+      { "id": "2", "lines": ["Zweite Strophe, Zeile 1", "Zweite Strophe, Zeile 2"] },
+      { "id": "3", "lines": ["Dritte Strophe, Zeile 1", "Dritte Strophe, Zeile 2"] }
+    ]
+  },
+  {
+    "id": "example-003",
+    "number": "003",
+    "title": "Beispiel-Lied mit langen Zeilen",
+    "language": "de",
+    "verses": [
+      { 
+        "id": "1", 
+        "lines": [
+          "Dies ist eine sehr lange Zeile, die wahrscheinlich umgebrochen werden muss, wenn sie auf dem Bildschirm angezeigt wird",
+          "Dies ist eine weitere lange Zeile für Testzwecke der Zeilenumbruchfunktion"
+        ] 
+      },
+      { 
+        "id": "2", 
+        "lines": [
+          "Zweite Strophe mit ebenfalls längeren Zeilen",
+          "Die auf dem Projektor gut lesbar sein sollten"
+        ] 
+      }
+    ]
+  }
+]
