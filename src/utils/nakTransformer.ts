@@ -4,8 +4,9 @@
  */
 import { Song, Verse } from '@/features/songs/song.types';
 
-// Interface für die Struktur eines NAK-Songs (wird in der Transformation verwendet)
-interface NAKSongStructure {
+// Interface für die interne Struktur eines NAK-Songs während der Transformation
+// Wird in den Transformationsfunktionen verwendet
+type NAKSongInternal = {
   id: string;
   number: string;
   title: string;
@@ -17,7 +18,7 @@ interface NAKSongStructure {
   copyright?: string;
   language?: string;
   topics?: string[];
-}
+};
 
 /**
  * Transformiert NAK-Gesangbuch-Daten in unser internes Format

@@ -81,7 +81,7 @@ export class SongRepository {
   /**
    * Validiert ein Array von Liedern gegen das Schema
    */
-  private validateSongs(songs: any[], filename: string): { valid: Song[]; invalid: { file: string; errors: string[] }[] } {
+  private validateSongs(songs: unknown[], filename: string): { valid: Song[]; invalid: { file: string; errors: string[] }[] } {
     const result: { valid: Song[]; invalid: { file: string; errors: string[] }[] } = {
       valid: [],
       invalid: []
@@ -143,22 +143,27 @@ export class SongRepository {
   /**
    * Prüft, ob ein Lied die grundlegenden Anforderungen erfüllt
    */
-  private isBasicSongValid(song: any): boolean {
+  private isBasicSongValid(song: unknown): boolean {
     return (
       song && 
       typeof song === 'object' &&
+      'id' in song &&
       typeof song.id === 'string' && 
       song.id.length > 0 &&
+      'title' in song &&
       typeof song.title === 'string' && 
       song.title.length > 0 &&
+      'verses' in song &&
       Array.isArray(song.verses) && 
       song.verses.length > 0 &&
-      song.verses.every((verse: any) => 
+      song.verses.every((verse: Record<string, unknown>) => 
         typeof verse === 'object' &&
+        'id' in verse &&
         typeof verse.id === 'string' &&
+        'lines' in verse &&
         Array.isArray(verse.lines) &&
         verse.lines.length > 0 &&
-        verse.lines.every((line: any) => typeof line === 'string')
+        verse.lines.every((line: unknown) => typeof line === 'string')
       )
     );
   }
@@ -177,7 +182,7 @@ export class SongRepository {
         const content = await readFileAsText(file);
         
         // JSON parsen
-        let songs: any;
+        let songs: unknown;
         try {
           songs = JSON.parse(content);
         } catch (error) {
