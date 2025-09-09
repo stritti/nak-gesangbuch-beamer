@@ -104,6 +104,16 @@ onMounted(async () => {
   }
 });
 
+// Überwache den aktuellen Index und schalte auf Blackout, wenn das Ende erreicht ist
+watch(() => projectionStore.currentIndex, (newIndex) => {
+  if (slides.value.length > 0 && newIndex >= slides.value.length) {
+    // Wenn wir über den letzten Slide hinaus sind, aktiviere Blackout
+    projectionStore.blackout = true;
+    // Setze den Index zurück auf den letzten Slide (für den Fall, dass Blackout deaktiviert wird)
+    projectionStore.currentIndex = slides.value.length - 1;
+  }
+});
+
 // Reagiere auf Änderungen der Projektor-Einstellungen
 watch(() => projectionStore.maxLinesPerSlide, () => {
   prepareSlides(currentSong.value);
