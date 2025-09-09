@@ -21,42 +21,122 @@ interface NAKSong {
 /**
  * Transformiert NAK-Gesangbuch-Daten in unser internes Format
  */
-export function transformNAKSongs(nakSongs: NAKSong[]): Song[] {
-  return nakSongs.map(transformNAKSong);
+export function transformNAKSongs(nakData: any): Song[] {
+  // Prüfe, ob nakData ein Array ist
+  if (Array.isArray(nakData)) {
+    return nakData.map(transformNAKSong);
+  }
+  
+  // Wenn nakData ein Objekt mit einer songs-Eigenschaft ist
+  if (nakData && typeof nakData === 'object' && 'songs' in nakData && Array.isArray(nakData.songs)) {
+    return nakData.songs.map(transformNAKSong);
+  }
+  
+  // Wenn nakData ein Objekt mit Liedern als Eigenschaften ist (z.B. {song1: {...}, song2: {...}})
+  if (nakData && typeof nakData === 'object') {
+    const songs: Song[] = [];
+    for (const key in nakData) {
+      if (Object.prototype.hasOwnProperty.call(nakData, key) && typeof nakData[key] === 'object') {
+        try {
+          const song = transformNAKSong(nakData[key]);
+          songs.push(song);
+        } catch (error) {
+          console.warn(`Konnte Lied ${key} nicht transformieren:`, error);
+        }
+      }
+    }
+    return songs;
+  }
+  
+  // Fallback: Leeres Array zurückgeben
+  console.warn('Unbekanntes NAK-Datenformat, keine Lieder gefunden');
+  return [];
 }
 
 /**
  * Transformiert ein einzelnes NAK-Lied in unser internes Format
  */
-export function transformNAKSong(nakSong: NAKSong): Song {
-  // Verse aus dem NAK-Format extrahieren
-  const verses: Verse[] = Object.entries(nakSong.verses).map(([id, lines]) => ({
-    id,
-    lines
-  }));
-
+export function transformNAKSong(nakSong: any): Song {
+  // Prüfe, ob das Lied die erforderlichen Eigenschaften hat
+  if (!nakSong || typeof nakSong !== 'object') {
+    throw new Error('Ungültiges NAK-Lied-Format');
+  }
+  
+  if (!nakSong.title) {
+    throw new Error('Lied hat keinen Titel');
+  }
+  
+  // Generiere eine ID, falls keine vorhanden
+  const id = nakSong.id || nakSong.number ? `nak-${nakSong.number}` : `nak-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  
+  // Extrahiere Verse aus verschiedenen möglichen Formaten
+  let verses: Verse[] = [];
+  
+  if (nakSong.verses) {
+    // Format: {verses: {"1": ["Zeile 1", "Zeile 2"], "2": ["Zeile 3", "Zeile 4"]}}
+    if (typeof nakSong.verses === 'object' && !Array.isArray(nakSong.verses)) {
+      verses = Object.entries(nakSong.verses).map(([id, lines]) => ({
+        id,
+        lines: Array.isArray(lines) ? lines : [String(lines)]
+      }));
+    } 
+    // Format: {verses: [{id: "1", lines: ["Zeile 1", "Zeile 2"]}, {id: "2", lines: ["Zeile 3", "Zeile 4"]}]}
+    else if (Array.isArray(nakSong.verses)) {
+      verses = nakSong.verses.map((verse: any) => {
+        if (typeof verse === 'object' && verse.id && verse.lines) {
+          return {
+            id: String(verse.id),
+            lines: Array.isArray(verse.lines) ? verse.lines : [String(verse.lines)]
+          };
+        }
+        return null;
+      }).filter(Boolean);
+    }
+  }
+  
+  // Wenn keine Verse gefunden wurden, erstelle einen Dummy-Vers
+  if (verses.length === 0) {
+    verses = [{
+      id: "1",
+      lines: ["[Keine Verse gefunden]"]
+    }];
+  }
+  
   // Refrain, falls vorhanden
-  const refrain: Verse | undefined = nakSong.refrain
-    ? {
-        id: 'R',
-        lines: nakSong.refrain
-      }
-    : undefined;
-
-  // Verse-Reihenfolge erstellen (1, 2, 3, ... mit Refrain nach jedem Vers, falls vorhanden)
-  const verseOrder = verses.flatMap(verse => 
-    refrain ? [verse.id, 'R'] : [verse.id]
-  );
-
+  let refrain: Verse | undefined = undefined;
+  if (nakSong.refrain) {
+    refrain = {
+      id: 'R',
+      lines: Array.isArray(nakSong.refrain) ? nakSong.refrain : [String(nakSong.refrain)]
+    };
+  }
+  
+  // Verse-Reihenfolge erstellen
+  let verseOrder: string[] = [];
+  
+  // Wenn verseOrder im Original vorhanden ist
+  if (nakSong.verseOrder && Array.isArray(nakSong.verseOrder)) {
+    verseOrder = nakSong.verseOrder;
+  } 
+  // Sonst erstelle eine Reihenfolge (1, 2, 3, ... mit Refrain nach jedem Vers, falls vorhanden)
+  else {
+    verseOrder = verses.flatMap(verse => 
+      refrain ? [verse.id, 'R'] : [verse.id]
+    );
+  }
+  
   // Transformiertes Lied zurückgeben
   return {
-    id: nakSong.id || `nak-${nakSong.number}`,
-    number: nakSong.number,
-    title: nakSong.title,
+    id,
+    number: nakSong.number ? String(nakSong.number) : undefined,
+    title: String(nakSong.title),
+    subtitle: nakSong.subtitle ? String(nakSong.subtitle) : undefined,
     language: nakSong.language || 'de',
-    authors: nakSong.authors || [],
-    topics: nakSong.topics || [],
-    copyright: nakSong.copyright,
+    authors: Array.isArray(nakSong.authors) ? nakSong.authors : 
+             (nakSong.authors ? [String(nakSong.authors)] : []),
+    topics: Array.isArray(nakSong.topics) ? nakSong.topics : 
+            (nakSong.topics ? [String(nakSong.topics)] : []),
+    copyright: nakSong.copyright ? String(nakSong.copyright) : undefined,
     verses,
     refrain,
     verseOrder,

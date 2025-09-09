@@ -41,8 +41,13 @@ export class SongRepository {
           // Transformiere die NAK-Daten in unser Format
           const transformedSongs = transformNAKSongs(nakData);
           
-          // Validiere die transformierten Lieder
-          return this.validateSongs(transformedSongs, 'nakbuch_v5.4.0.json');
+          if (transformedSongs.length > 0) {
+            console.log(`${transformedSongs.length} Lieder aus NAK-Gesangbuch geladen`);
+            // Validiere die transformierten Lieder
+            return this.validateSongs(transformedSongs, 'nakbuch_v5.4.0.json');
+          } else {
+            console.warn('Keine Lieder im NAK-Gesangbuch gefunden');
+          }
         }
       } catch (nakError) {
         console.warn('NAK-Gesangbuch konnte nicht geladen werden, versuche Standard-Datei:', nakError);
