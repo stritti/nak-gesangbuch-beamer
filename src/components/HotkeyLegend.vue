@@ -13,8 +13,14 @@
 </template>
 
 <script setup lang="ts">
-// Standardmäßige Hotkeys
-const defaultHotkeys = [
+// Props
+interface Hotkey {
+  key: string;
+  description: string;
+}
+
+// Define the default hotkeys as a constant outside of props
+const DEFAULT_HOTKEYS: Hotkey[] = [
   { key: '←', description: 'Vorheriger Slide' },
   { key: '→', description: 'Nächster Slide' },
   { key: 'B', description: 'Blackout ein/aus' },
@@ -23,17 +29,10 @@ const defaultHotkeys = [
   { key: ',', description: 'Vorheriger Slide (alternativ)' }
 ];
 
-// Props
-interface Hotkey {
-  key: string;
-  description: string;
-}
-
-interface Props {
+// Use withDefaults with a static value instead of a function reference
+const props = withDefaults(defineProps<{
   hotkeys?: Hotkey[];
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  hotkeys: () => defaultHotkeys
+}>(), {
+  hotkeys: DEFAULT_HOTKEYS
 });
 </script>
