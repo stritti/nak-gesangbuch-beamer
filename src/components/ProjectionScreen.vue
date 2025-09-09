@@ -505,17 +505,13 @@ const afterLeave = () => {
   top: 1rem;
   right: 1rem;
   z-index: 10;
-  opacity: 0.3;
   transition: opacity 0.3s ease;
 }
 
-.nak-logo-container:hover {
-  opacity: 0.5;
-}
 
 .nak-logo {
-  width: 60px;
-  height: 60px;
+  width: 5rem;
+  height: 5rem;
 }
 
 /* Keine Filter für das Logo mehr nötig, da es jetzt mit eigenen Farben kommt */
