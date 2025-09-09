@@ -7,10 +7,13 @@
     :theme="projectionStore.theme"
     :blackout="projectionStore.blackout"
     :max-lines-per-slide="projectionStore.maxLinesPerSlide"
+    :song-title="currentSong?.title"
+    :song-number="currentSong?.number"
     @next="projectionStore.next()"
     @prev="projectionStore.prev()"
     @blackout="projectionStore.toggleBlackout()"
     @fullscreen="projectionStore.setFullscreen($event)"
+    @jump-to-verse="projectionStore.currentIndex = $event"
   >
     <template #footer v-if="currentSong && currentSong.copyright">
       <div class="text-center">
