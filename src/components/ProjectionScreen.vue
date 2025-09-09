@@ -43,6 +43,19 @@
     <div v-if="$slots.footer && !blackout" class="absolute bottom-0 left-0 right-0 p-4 text-sm opacity-70">
       <slot name="footer"></slot>
     </div>
+    
+    <!-- Strophennummern-Navigation -->
+    <div v-if="!blackout && verseNumbers.length > 0" class="absolute bottom-0 left-0 right-0 p-4 flex justify-center gap-3 opacity-50">
+      <button 
+        v-for="(verseNum, idx) in verseNumbers" 
+        :key="verseNum"
+        class="verse-number px-2 py-1 rounded-full text-sm"
+        :class="{ 'active': idx === currentVerseIndex }"
+        @click="jumpToVerse(idx)"
+      >
+        {{ verseNum }}
+      </button>
+    </div>
   </div>
 </template>
 
@@ -60,6 +73,7 @@ interface Props {
   theme?: 'light' | 'dark' | 'high-contrast';
   blackout?: boolean;
   maxLinesPerSlide?: number;
+  verseNumbers?: string[]; // Strophennummern wie "1", "2", "R", etc.
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -69,7 +83,8 @@ const props = withDefaults(defineProps<Props>(), {
   lineHeight: 1.3,
   theme: 'high-contrast',
   blackout: false,
-  maxLinesPerSlide: 4
+  maxLinesPerSlide: 4,
+  verseNumbers: () => []
 });
 
 // Emits
@@ -78,12 +93,37 @@ const emit = defineEmits<{
   (e: 'prev'): void;
   (e: 'blackout'): void;
   (e: 'fullscreen', value: boolean): void;
+  (e: 'jump-to-verse', index: number): void;
 }>();
 
 // Refs
 const projectionRef = ref<HTMLElement | null>(null);
 const contentRef = ref<HTMLElement | null>(null);
 const computedFontSize = ref(props.fontSize);
+
+// Berechne den aktuellen Strophenindex basierend auf dem currentIndex
+const currentVerseIndex = computed(() => {
+  if (!props.slides.length || !props.verseNumbers.length) return 0;
+  
+  // Berechne, zu welcher Strophe der aktuelle Slide gehört
+  let slideCount = 0;
+  for (let i = 0; i < props.verseNumbers.length; i++) {
+    const verse = props.slides[i];
+    if (!verse) continue;
+    
+    // Berechne, wie viele Slides für diese Strophe benötigt werden
+    const slidesForVerse = Math.ceil(verse.length / props.maxLinesPerSlide);
+    
+    // Wenn der aktuelle Index in diesem Bereich liegt, ist dies die aktuelle Strophe
+    if (props.currentIndex < slideCount + slidesForVerse) {
+      return i;
+    }
+    
+    slideCount += slidesForVerse;
+  }
+  
+  return 0;
+});
 
 // Computed
 const currentSlide = computed(() => {
@@ -155,6 +195,34 @@ const adjustFontSize = async () => {
 // Methods
 const handleKeydown = (e: KeyboardEvent) => {
   // Hotkeys werden durch bindHotkeys verarbeitet
+  
+  // Zusätzlich: Zifferntasten für direkten Sprung zu Strophen
+  const key = e.key;
+  if (/^[0-9]$/.test(key)) {
+    const verseIndex = parseInt(key) - 1; // 1 wird zu Index 0, etc.
+    if (verseIndex >= 0 && verseIndex < props.verseNumbers.length) {
+      jumpToVerse(verseIndex);
+    }
+  }
+};
+
+// Zu einer bestimmten Strophe springen
+const jumpToVerse = (verseIndex: number) => {
+  if (verseIndex < 0 || verseIndex >= props.verseNumbers.length) return;
+  
+  // Berechne den Slide-Index für die gewählte Strophe
+  let slideIndex = 0;
+  for (let i = 0; i < verseIndex; i++) {
+    const verse = props.slides[i];
+    if (!verse) continue;
+    
+    // Berechne, wie viele Slides für diese Strophe benötigt werden
+    const slidesForVerse = Math.ceil(verse.length / props.maxLinesPerSlide);
+    slideIndex += slidesForVerse;
+  }
+  
+  // Springe zu diesem Slide
+  emit('jump-to-verse', slideIndex);
 };
 
 const toggleFullscreen = async () => {
@@ -286,5 +354,28 @@ const afterLeave = () => {
 .slide-fade-leave-to {
   opacity: 0;
   transform: translateY(-30px);
+}
+
+.verse-number {
+  transition: all 0.2s ease;
+  background-color: rgba(128, 128, 128, 0.2);
+}
+
+.verse-number.active {
+  background-color: rgba(255, 255, 255, 0.3);
+  font-weight: bold;
+  transform: scale(1.1);
+}
+
+.high-contrast .verse-number.active {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.light .verse-number.active {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.dark .verse-number.active {
+  background-color: rgba(255, 255, 255, 0.2);
 }
 </style>
