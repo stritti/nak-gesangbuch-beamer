@@ -26,10 +26,11 @@
         >
         <div 
           :key="props.currentIndex"
-          class="text-center max-w-4xl"
+          class="text-center max-w-4xl overflow-hidden"
           :style="{ 
             fontSize: `${computedFontSize}px`, 
-            lineHeight: lineHeight 
+            lineHeight: lineHeight,
+            maxHeight: 'calc(100vh - 180px)' // Reserviere Platz für Header und Footer
           }"
           ref="contentRef"
         >
@@ -167,28 +168,73 @@ const totalSlides = computed(() => {
   return props.slides.length;
 });
 
-// Methode zur Anpassung der Schriftgröße basierend auf dem Inhalt
+// Methode zur Anpassung der Schriftgröße basierend auf dem Inhalt und der Bildschirmgröße
 const adjustFontSize = async () => {
   if (!projectionRef.value || !contentRef.value || !currentSlide.value) return;
   
   // Warten auf das nächste Rendering
   await nextTick();
   
-  const containerHeight = projectionRef.value.clientHeight - 100; // Abzüglich Padding
-  const containerWidth = projectionRef.value.clientWidth - 100;
+  // Reserviere Platz für Header (oben) und Navigation/Footer (unten)
+  const headerSpace = 80; // Platz für Liedtitel und Nummer
+  const footerSpace = 100; // Platz für Navigation und Quellenangaben
   
-  // Starten mit der vorgegebenen Schriftgröße
-  let fontSize = props.fontSize;
+  const containerHeight = projectionRef.value.clientHeight - headerSpace - footerSpace;
+  const containerWidth = projectionRef.value.clientWidth - 100; // Seitenränder
+  
+  // Basisschriftgröße für 1024x768 berechnen
+  // Für höhere Auflösungen skalieren wir proportional
+  const baseWidth = 1024;
+  const baseHeight = 768;
+  const scaleFactor = Math.min(
+    projectionRef.value.clientWidth / baseWidth,
+    projectionRef.value.clientHeight / baseHeight
+  );
+  
+  // Starten mit einer skalierten Basisschriftgröße
+  // Wir beginnen mit einer etwas kleineren Größe als props.fontSize,
+  // um schneller eine passende Größe zu finden
+  let fontSize = Math.min(props.fontSize, 60) * scaleFactor;
   contentRef.value.style.fontSize = `${fontSize}px`;
   
   // Überprüfen, ob der Inhalt in den Container passt
+  // Wir verwenden eine binäre Suche, um schneller die optimale Größe zu finden
+  let minSize = 20;
+  let maxSize = fontSize;
+  let attempts = 0;
+  const maxAttempts = 10; // Begrenze die Anzahl der Versuche
+  
+  while (attempts < maxAttempts) {
+    attempts++;
+    
+    if (
+      contentRef.value.scrollHeight <= containerHeight && 
+      contentRef.value.scrollWidth <= containerWidth
+    ) {
+      // Inhalt passt, versuche größer
+      minSize = fontSize;
+      fontSize = Math.min(fontSize + (maxSize - fontSize) / 2, maxSize);
+    } else {
+      // Inhalt passt nicht, versuche kleiner
+      maxSize = fontSize;
+      fontSize = Math.max(fontSize - (fontSize - minSize) / 2, minSize);
+    }
+    
+    // Setze neue Größe
+    contentRef.value.style.fontSize = `${fontSize}px`;
+    
+    // Wenn wir nahe genug an der optimalen Größe sind, brechen wir ab
+    if (maxSize - minSize < 2) break;
+  }
+  
+  // Sicherheitsüberprüfung: Falls der Inhalt immer noch nicht passt,
+  // reduzieren wir die Größe weiter
   while (
     (contentRef.value.scrollHeight > containerHeight || 
      contentRef.value.scrollWidth > containerWidth) && 
-    fontSize > 30
+    fontSize > minSize
   ) {
-    // Schriftgröße schrittweise verkleinern
-    fontSize -= 5;
+    fontSize -= 1;
     contentRef.value.style.fontSize = `${fontSize}px`;
   }
   
@@ -281,7 +327,7 @@ onMounted(() => {
     adjustFontSize();
     
     // Auf Größenänderungen reagieren
-    window.addEventListener('resize', adjustFontSize);
+    window.addEventListener('resize', handleResize);
     
     // Event-Listener für Nachrichten vom Steuerungsfenster registrieren
     window.addEventListener('message', handleMessage);
@@ -300,7 +346,7 @@ onUnmounted(() => {
   projectionService.releaseWakeLock().catch(console.error);
   
   // Event-Listener entfernen
-  window.removeEventListener('resize', adjustFontSize);
+  window.removeEventListener('resize', handleResize);
   window.removeEventListener('message', handleMessage);
 });
 
@@ -320,6 +366,20 @@ watch(() => props.currentIndex, () => {
 watch(() => props.slides, () => {
   nextTick(() => adjustFontSize());
 }, { deep: true });
+
+// Schriftgröße anpassen, wenn sich die Fenstergröße ändert
+let resizeTimeout: number | null = null;
+const handleResize = () => {
+  if (resizeTimeout) {
+    window.clearTimeout(resizeTimeout);
+  }
+  
+  // Verzögere die Anpassung, um zu viele Berechnungen zu vermeiden
+  resizeTimeout = window.setTimeout(() => {
+    adjustFontSize();
+    resizeTimeout = null;
+  }, 100);
+};
 
 // Animation-Hooks
 const beforeEnter = () => {
