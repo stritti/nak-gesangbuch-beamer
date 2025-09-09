@@ -8,27 +8,35 @@
   >
     <div v-if="blackout" class="w-full h-full bg-black"></div>
     <div v-else class="flex items-center justify-center h-full p-8">
-      <div 
-        class="text-center max-w-4xl"
-        :style="{ 
-          fontSize: `${computedFontSize}px`, 
-          lineHeight: lineHeight 
-        }"
-        ref="contentRef"
+      <transition 
+        name="slide-fade" 
+        mode="out-in"
+        @before-enter="beforeEnter"
+        @after-leave="afterLeave"
       >
-        <div v-if="currentSlide" class="slide-content">
-          <p 
-            v-for="(line, index) in currentSlide" 
-            :key="index"
-            class="mb-2"
-          >
-            {{ line }}
-          </p>
+        <div 
+          :key="props.currentIndex"
+          class="text-center max-w-4xl"
+          :style="{ 
+            fontSize: `${computedFontSize}px`, 
+            lineHeight: lineHeight 
+          }"
+          ref="contentRef"
+        >
+          <div v-if="currentSlide" class="slide-content">
+            <p 
+              v-for="(line, index) in currentSlide" 
+              :key="index"
+              class="mb-2"
+            >
+              {{ line }}
+            </p>
+          </div>
+          <div v-else class="text-center">
+            <p>Keine Inhalte zur Anzeige</p>
+          </div>
         </div>
-        <div v-else class="text-center">
-          <p>Keine Inhalte zur Anzeige</p>
-        </div>
-      </div>
+      </transition>
     </div>
     
     <!-- Optional: Footer für Lizenzhinweise -->
@@ -210,4 +218,32 @@ watch(() => props.currentIndex, () => {
 watch(() => props.slides, () => {
   nextTick(() => adjustFontSize());
 }, { deep: true });
+
+// Animation-Hooks
+const beforeEnter = () => {
+  // Hier könnten wir zusätzliche Logik vor dem Einblenden hinzufügen
+  // z.B. Audio-Effekte oder andere Vorbereitungen
+};
+
+const afterLeave = () => {
+  // Nach dem Ausblenden können wir hier zusätzliche Aktionen ausführen
+  // z.B. Statistiken aktualisieren oder Ereignisse auslösen
+};
 </script>
+
+<style scoped>
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.5s ease;
+}
+
+.slide-fade-enter-from {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-30px);
+}
+</style>
