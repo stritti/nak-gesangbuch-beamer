@@ -18,12 +18,12 @@
       
       <!-- Hauptinhalt (zentriert) -->
       <div class="flex-grow flex items-center justify-center">
-      <transition 
-        name="slide-fade" 
-        mode="out-in"
-        @before-enter="beforeEnter"
-        @after-leave="afterLeave"
-      >
+        <transition 
+          name="slide-fade" 
+          mode="out-in"
+          @before-enter="beforeEnter"
+          @after-leave="afterLeave"
+        >
         <div 
           :key="props.currentIndex"
           class="text-center max-w-4xl"
@@ -47,6 +47,7 @@
           </div>
         </div>
       </transition>
+      </div>
     </div>
     
     <!-- Optional: Footer für Lizenzhinweise -->
