@@ -254,12 +254,7 @@ const totalSlides = computed(() => slides.value.length);
 
 // Methoden zur Steuerung der Projektion
 const openProjectorWindow = () => {
-  // Schließe vorhandenes Fenster, falls es existiert
-  if (projectorWindow.value && !projectorWindow.value.closed) {
-    projectorWindow.value.close();
-  }
-  
-  // Öffne ein neues Fenster mit der Projektor-Seite
+  // Öffne ein Fenster mit der Projektor-Seite oder aktualisiere das bestehende
   const songId = route.query.songId as string | undefined;
   const setlistId = route.query.setlistId as string | undefined;
   
@@ -346,14 +341,23 @@ const setProjectorWindow = (type: 'primary' | 'secondary' | 'fullscreen' | 'cust
   // Speichere die Einstellungen für die nächste Sitzung
   localStorage.setItem('projectorWindowFeatures', windowFeatures);
   
-  // Wenn ein Projektor-Fenster bereits geöffnet ist, schließe es und öffne es neu
+  // Wenn ein Projektor-Fenster bereits geöffnet ist, aktualisiere es mit den neuen Einstellungen
   if (projectorWindow.value && !projectorWindow.value.closed) {
+    // Speichere die aktuelle URL
     const url = projectorWindow.value.location.href;
+    
+    // Schließe das aktuelle Fenster
     projectorWindow.value.close();
+    
+    // Öffne ein neues Fenster mit den aktualisierten Einstellungen
     projectorWindow.value = window.open(url, 'projector', windowFeatures);
+    
     if (projectorWindow.value) {
       projectorWindow.value.focus();
     }
+  } else {
+    // Falls kein Fenster offen ist, öffne ein neues mit den Standardparametern
+    openProjectorWindow();
   }
 };
 

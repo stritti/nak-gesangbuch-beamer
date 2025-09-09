@@ -4,6 +4,7 @@
 
 /**
  * Öffnet ein Projektionsfenster mit dem angegebenen Lied oder der Setlist
+ * oder aktualisiert ein bestehendes Fenster
  * 
  * @param options Optionen für das Projektionsfenster
  * @returns Das geöffnete Fenster oder null, wenn das Öffnen fehlgeschlagen ist
@@ -31,10 +32,18 @@ export function openProjectorWindow(options: {
   // Verwende gespeicherte Fenstereinstellungen oder Standardwerte
   const windowFeatures = localStorage.getItem('projectorWindowFeatures') || 'width=1024,height=768';
   
-  // Öffne das Fenster
-  const projectorWindow = window.open(url, 'projector', windowFeatures);
+  // Prüfe, ob bereits ein Projektorfenster existiert
+  let projectorWindow = window.open('', 'projector');
   
-  // Fokus auf das neue Fenster setzen
+  // Wenn das Fenster nicht existiert oder geschlossen wurde, öffne ein neues
+  if (!projectorWindow || projectorWindow.closed) {
+    projectorWindow = window.open(url, 'projector', windowFeatures);
+  } else {
+    // Wenn das Fenster bereits existiert, aktualisiere die URL
+    projectorWindow.location.href = url;
+  }
+  
+  // Fokus auf das Fenster setzen
   if (projectorWindow) {
     projectorWindow.focus();
   }
@@ -62,7 +71,29 @@ export function sendMessageToProjector(window: Window | null, message: any): voi
 export function isProjectorOpen(): boolean {
   const projectorWindow = window.open('', 'projector');
   if (projectorWindow && !projectorWindow.closed) {
+    // Schließe das Fenster nicht, sondern prüfe nur, ob es existiert
     return true;
   }
   return false;
+}
+
+/**
+ * Holt das aktuelle Projektorfenster oder öffnet ein neues, wenn keines existiert
+ * 
+ * @returns Das Projektorfenster oder null, wenn keines geöffnet werden konnte
+ */
+export function getProjectorWindow(): Window | null {
+  let projectorWindow = window.open('', 'projector');
+  
+  if (!projectorWindow || projectorWindow.closed) {
+    // Wenn kein Fenster existiert, öffne ein neues
+    const windowFeatures = localStorage.getItem('projectorWindowFeatures') || 'width=1024,height=768';
+    projectorWindow = window.open('/projector', 'projector', windowFeatures);
+  }
+  
+  if (projectorWindow) {
+    projectorWindow.focus();
+  }
+  
+  return projectorWindow;
 }
