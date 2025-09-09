@@ -39,11 +39,15 @@ async function handleImport() {
       clearInterval(progressInterval);
       importProgress.value = 100;
       
+      // Bücher aus dem Repository laden
+      const { nakRepository } = await import('@/features/ingest/nak.repository');
+      const books = await nakRepository.getBooks();
+      
       // Erfolg anzeigen
       importResult.value = {
         success: true,
         songCount: result.valid.length,
-        bookCount: 0, // Wird später aktualisiert, wenn wir die Bücher haben
+        bookCount: books.length,
         version: result.version || 'Unbekannt'
       };
     } finally {

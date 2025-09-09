@@ -14,12 +14,13 @@ const ID_PAD = (n: number) => String(n); // bei Bedarf: n.toString().padStart(3,
 export function parseTextToVerses(text: string): Verse[] {
   const normalized = text.replace(/\r\n/g, '\n').trim();
 
-  // Strophen anhand von Leerzeilen ODER Nummernpräfix ("1. ", "2. ", …) erkennen
+  // Strophen anhand von Leerzeilen (\n\n) ODER Nummernpräfix ("1. ", "2. ", …) erkennen
   const blocks = normalized
-    .split(/\n\s*\n+/)
+    .split(/\n\s*\n+/) // Trennung durch Leerzeilen
     .flatMap(b => b.split(/\n(?=\d+\.\s)/)); // falls mehrere nummerierte Abschnitte ohne Leerzeile
 
   return blocks.map((block, i) => {
+    // Prüfen, ob die Strophe mit einer Nummer beginnt (z.B. "1. ")
     const m = block.match(/^(\d+)\.\s*/);
     const id = m ? m[1] : String(i + 1);
     const cleaned = block.replace(/^\d+\.\s*/, '');

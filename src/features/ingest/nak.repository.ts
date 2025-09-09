@@ -25,6 +25,7 @@ export class NakRepository {
    */
   async importNakFile(file: File): Promise<{ 
     songs: Song[]; 
+    books: Array<{ id: string; title: string; count: number }>;
     version: string; 
     errors: Array<{ path: string; message: string }> 
   }> {
@@ -88,16 +89,28 @@ export class NakRepository {
       
       this.importProgress.value = 60;
 
+      // Bücher extrahieren und in IndexedDB speichern
+      const books = nakData.buecher.map(book => ({
+        id: book.id,
+        title: book.title || this.getBookName(book.id),
+        count: book.hymnCount || 0
+      }));
+      
       // Daten transformieren
       const songs = transformNakDataset(nakData as NakDataset);
       this.importProgress.value = 80;
 
       // In IndexedDB speichern
       await this.saveSongs(songs);
+      
+      // Bücher in IndexedDB speichern
+      await this.saveBooks(books);
+      
       this.importProgress.value = 100;
 
       return {
         songs,
+        books,
         version: nakData.version,
         errors: this.importErrors.value
       };
@@ -118,6 +131,20 @@ export class NakRepository {
     await idb.setMany('songs', songs);
     
     console.log(`${songs.length} Lieder erfolgreich in IndexedDB gespeichert`);
+  }
+  
+  /**
+   * Speichert Bücher in der IndexedDB
+   * @param books Die zu speichernden Bücher
+   */
+  private async saveBooks(books: Array<{ id: string; title: string; count: number }>): Promise<void> {
+    // Zuerst alle vorhandenen Bücher löschen
+    await idb.clear('books');
+    
+    // Dann neue Bücher speichern
+    await idb.setMany('books', books);
+    
+    console.log(`${books.length} Bücher erfolgreich in IndexedDB gespeichert`);
   }
 
   /**
