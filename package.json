@@ -11,7 +11,6 @@
     "test": "vitest run",
     "test:ui": "vitest --ui",
     "e2e": "playwright test",
-    "prepare": "husky install",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -37,7 +36,6 @@
     "eslint": "^8.49.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-vue": "^9.17.0",
-    "husky": "^8.0.3",
     "jsdom": "^22.1.0",
     "postcss": "^8.4.30",
     "prettier": "^3.0.3",
