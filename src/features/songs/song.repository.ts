@@ -38,15 +38,19 @@ export class SongRepository {
         if (nakResponse.ok) {
           const nakData = await nakResponse.json();
           
-          // Transformiere die NAK-Daten in unser Format
-          const transformedSongs = transformNAKSongs(nakData);
-          
-          if (transformedSongs.length > 0) {
-            console.log(`${transformedSongs.length} Lieder aus NAK-Gesangbuch geladen`);
-            // Validiere die transformierten Lieder
-            return this.validateSongs(transformedSongs, 'nakbuch_v5.4.0.json');
-          } else {
-            console.warn('Keine Lieder im NAK-Gesangbuch gefunden');
+          try {
+            // Transformiere die NAK-Daten in unser Format
+            const transformedSongs = transformNAKSongs(nakData);
+            
+            if (transformedSongs.length > 0) {
+              console.log(`${transformedSongs.length} Lieder aus NAK-Gesangbuch geladen`);
+              // Validiere die transformierten Lieder
+              return this.validateSongs(transformedSongs, 'nakbuch_v5.4.0.json');
+            } else {
+              console.warn('Keine Lieder im NAK-Gesangbuch gefunden');
+            }
+          } catch (transformError) {
+            console.error('Fehler beim Transformieren der NAK-Daten:', transformError);
           }
         }
       } catch (nakError) {

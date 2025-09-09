@@ -24,18 +24,48 @@ interface NAKSong {
 export function transformNAKSongs(nakData: any): Song[] {
   // Prüfe, ob nakData ein Array ist
   if (Array.isArray(nakData)) {
-    return nakData.map(transformNAKSong);
+    const songs: Song[] = [];
+    for (const item of nakData) {
+      try {
+        if (item && typeof item === 'object') {
+          const song = transformNAKSong(item);
+          songs.push(song);
+        }
+      } catch (error) {
+        console.warn(`Konnte Lied nicht transformieren:`, error);
+      }
+    }
+    return songs;
   }
   
   // Wenn nakData ein Objekt mit einer songs-Eigenschaft ist
   if (nakData && typeof nakData === 'object' && 'songs' in nakData && Array.isArray(nakData.songs)) {
-    return nakData.songs.map(transformNAKSong);
+    const songs: Song[] = [];
+    for (const item of nakData.songs) {
+      try {
+        if (item && typeof item === 'object') {
+          const song = transformNAKSong(item);
+          songs.push(song);
+        }
+      } catch (error) {
+        console.warn(`Konnte Lied nicht transformieren:`, error);
+      }
+    }
+    return songs;
   }
   
   // Wenn nakData ein Objekt mit Liedern als Eigenschaften ist (z.B. {song1: {...}, song2: {...}})
   if (nakData && typeof nakData === 'object') {
+    // Ignoriere bekannte Metadaten-Eigenschaften
+    const metadataKeys = ['buecher', 'books', 'metadata', 'info', 'version'];
+    
     const songs: Song[] = [];
     for (const key in nakData) {
+      if (metadataKeys.includes(key)) {
+        console.log(`Überspringe Metadaten-Objekt: ${key}`);
+        continue;
+      }
+      
       if (Object.prototype.hasOwnProperty.call(nakData, key) && typeof nakData[key] === 'object') {
         try {
           const song = transformNAKSong(nakData[key]);
@@ -62,12 +92,16 @@ export function transformNAKSong(nakSong: any): Song {
     throw new Error('Ungültiges NAK-Lied-Format');
   }
   
-  if (!nakSong.title) {
-    throw new Error('Lied hat keinen Titel');
+  // Spezialfall für 'buecher' Objekt, das kein Lied ist
+  if (nakSong.hasOwnProperty('buecher') || nakSong.hasOwnProperty('books')) {
+    throw new Error('Metadaten-Objekt, kein Lied');
   }
   
+  // Generiere einen Titel, falls keiner vorhanden ist
+  const title = nakSong.title || nakSong.name || `Lied ${nakSong.number || 'ohne Nummer'}`;
+  
   // Generiere eine ID, falls keine vorhanden
-  const id = nakSong.id || nakSong.number ? `nak-${nakSong.number}` : `nak-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  const id = nakSong.id || (nakSong.number ? `nak-${nakSong.number}` : `nak-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`);
   
   // Extrahiere Verse aus verschiedenen möglichen Formaten
   let verses: Verse[] = [];
@@ -129,7 +163,7 @@ export function transformNAKSong(nakSong: any): Song {
   return {
     id,
     number: nakSong.number ? String(nakSong.number) : undefined,
-    title: String(nakSong.title),
+    title: String(title),
     subtitle: nakSong.subtitle ? String(nakSong.subtitle) : undefined,
     language: nakSong.language || 'de',
     authors: Array.isArray(nakSong.authors) ? nakSong.authors : 
