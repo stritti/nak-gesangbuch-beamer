@@ -30,7 +30,7 @@
           :style="{ 
             fontSize: `${computedFontSize}px`, 
             lineHeight: lineHeight,
-            maxHeight: 'calc(100vh - 180px)' // Reserviere Platz für Header und Footer
+            maxHeight: 'calc(100vh - 220px)' // Mehr Platz für Header und Footer reservieren
           }"
           ref="contentRef"
         >
@@ -176,8 +176,8 @@ const adjustFontSize = async () => {
   await nextTick();
   
   // Reserviere Platz für Header (oben) und Navigation/Footer (unten)
-  const headerSpace = 80; // Platz für Liedtitel und Nummer
-  const footerSpace = 100; // Platz für Navigation und Quellenangaben
+  const headerSpace = 100; // Platz für Liedtitel und Nummer
+  const footerSpace = 120; // Platz für Navigation und Quellenangaben
   
   const containerHeight = projectionRef.value.clientHeight - headerSpace - footerSpace;
   const containerWidth = projectionRef.value.clientWidth - 100; // Seitenränder
@@ -237,6 +237,10 @@ const adjustFontSize = async () => {
     fontSize -= 1;
     contentRef.value.style.fontSize = `${fontSize}px`;
   }
+  
+  // Zusätzlicher Sicherheitsabstand, um sicherzustellen, dass nichts abgeschnitten wird
+  fontSize = Math.max(fontSize - 2, minSize);
+  contentRef.value.style.fontSize = `${fontSize}px`;
   
   // Aktualisiere die berechnete Schriftgröße
   computedFontSize.value = fontSize;
