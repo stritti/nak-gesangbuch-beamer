@@ -253,7 +253,12 @@ onMounted(async () => {
   // Informiere das Steuerungsfenster, dass der Projektor bereit ist
   if (window.opener) {
     window.opener.postMessage({
-      type: 'projectorReady'
+      type: 'projectorReady',
+      songId: currentSong.value?.id,
+      totalSlides: slides.value.length,
+      inSetlist: setlistItems.value.length > 0,
+      currentSetlistIndex: currentSetlistIndex.value,
+      totalSetlistItems: setlistItems.value.length
     }, '*');
   }
   

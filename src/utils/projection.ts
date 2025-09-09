@@ -97,3 +97,23 @@ export function getProjectorWindow(): Window | null {
   
   return projectorWindow;
 }
+
+/**
+ * Projiziert ein Lied im Projektorfenster
+ * 
+ * @param songId Die ID des zu projizierenden Liedes
+ * @returns Das Projektorfenster oder null, wenn keines geöffnet werden konnte
+ */
+export function projectSong(songId: string): Window | null {
+  return openProjectorWindow({ songId });
+}
+
+/**
+ * Projiziert eine Setlist im Projektorfenster
+ * 
+ * @param setlistId Die ID der zu projizierenden Setlist
+ * @returns Das Projektorfenster oder null, wenn keines geöffnet werden konnte
+ */
+export function projectSetlist(setlistId: string): Window | null {
+  return openProjectorWindow({ setlistId });
+}

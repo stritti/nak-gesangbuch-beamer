@@ -192,11 +192,13 @@ import HotkeyLegend from '@/components/HotkeyLegend.vue';
 import { Song, Verse } from '@/features/songs/song.types';
 import { splitVerseIntoSlides } from '@/utils/slideUtils';
 import { openProjectorWindow, sendMessageToProjector } from '@/utils/projection';
+import { useProjection } from '@/composables/useProjection';
 
 const route = useRoute();
 const projectionStore = useProjectionStore();
 const songStore = useSongStore();
 const setlistStore = useSetlistStore();
+const { projectorWindow: projectionWindow, projectSongToWindow, projectSetlistToWindow } = useProjection();
 
 // Zustand
 const slides = ref<string[][]>([]);
@@ -258,10 +260,13 @@ const openProjector = () => {
   const songId = route.query.songId as string | undefined;
   const setlistId = route.query.setlistId as string | undefined;
   
-  projectorWindow.value = openProjectorWindow({
-    songId,
-    setlistId
-  });
+  if (songId) {
+    projectorWindow.value = projectSongToWindow(songId);
+  } else if (setlistId) {
+    projectorWindow.value = projectSetlistToWindow(setlistId);
+  } else {
+    projectorWindow.value = openProjectorWindow({});
+  }
 };
 
 const handleNext = () => {
