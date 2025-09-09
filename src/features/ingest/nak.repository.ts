@@ -214,11 +214,10 @@ export class NakRepository {
         const buchId = song.source.buchId;
         
         if (!bookMap.has(buchId)) {
-          // Titel aus dem ersten Lied mit dieser Buch-ID extrahieren
-          // In einer echten Anwendung würde man die Buchtitel separat speichern
+          // Buchtitel aus der Buch-ID ermitteln
           bookMap.set(buchId, {
             id: buchId,
-            title: `${buchId.toUpperCase()}`,  // Fallback
+            title: this.getBookName(buchId),
             count: 1
           });
         } else {
@@ -229,6 +228,20 @@ export class NakRepository {
     }
     
     return Array.from(bookMap.values());
+  }
+
+  /**
+   * Hilfsfunktion, um den Buchnamen aus der Buch-ID zu ermitteln
+   */
+  private getBookName(buchId: string): string {
+    const bookNames: Record<string, string> = {
+      'gb': 'Gesangbuch',
+      'cb': 'Chorbuch',
+      'jl': 'Jugendliederbuch',
+      'kl': 'Kinderliederbuch'
+    };
+    
+    return bookNames[buchId] || buchId.toUpperCase();
   }
 
   /**

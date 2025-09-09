@@ -29,6 +29,18 @@ function selectBook(bookId: string | null) {
   selectedBookId.value = bookId === selectedBookId.value ? null : bookId;
   emit('filter', selectedBookId.value);
 }
+
+// Hilfsfunktion, um den Buchnamen aus der Buch-ID zu ermitteln
+function getBookName(buchId: string): string {
+  const bookNames: Record<string, string> = {
+    'gb': 'Gesangbuch',
+    'cb': 'Chorbuch',
+    'jl': 'Jugendliederbuch',
+    'kl': 'Kinderliederbuch'
+  };
+  
+  return bookNames[buchId] || buchId.toUpperCase();
+}
 </script>
 
 <template>
@@ -59,7 +71,7 @@ function selectBook(bookId: string | null) {
         :class="selectedBookId === book.id ? 'bg-blue-100 text-blue-800' : 'hover:bg-gray-100'"
         @click="selectBook(book.id)"
       >
-        <span>{{ book.title }}</span>
+        <span>{{ getBookName(book.id) }} ({{ book.id }})</span>
         <span class="text-sm text-gray-500">{{ book.count }}</span>
       </button>
     </div>
