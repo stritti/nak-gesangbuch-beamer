@@ -33,7 +33,11 @@
           }"
           ref="contentRef"
         >
-          <div v-if="currentSlide" class="slide-content">
+          <div v-if="currentSlide" class="slide-content text-left">
+            <!-- Strophennummer anzeigen -->
+            <div v-if="currentVerseNumber" class="verse-indicator mb-2 opacity-70">
+              {{ currentVerseNumber }}
+            </div>
             <p 
               v-for="(line, index) in currentSlide" 
               :key="index"
@@ -152,6 +156,14 @@ const currentVerseIndex = computed(() => {
   }
   
   return 0;
+});
+
+// Aktuelle Strophennummer für die Anzeige
+const currentVerseNumber = computed(() => {
+  if (extractedVerseNumbers.value.length === 0 || currentVerseIndex.value >= extractedVerseNumbers.value.length) {
+    return null;
+  }
+  return extractedVerseNumbers.value[currentVerseIndex.value];
 });
 
 // Computed
@@ -431,5 +443,25 @@ const afterLeave = () => {
 
 .dark .song-header {
   color: rgba(255, 255, 255, 0.9);
+}
+
+/* Styling für die Strophenanzeige */
+.verse-indicator {
+  font-size: 0.5em;
+  font-weight: bold;
+  text-align: left;
+  margin-bottom: 0.5em;
+}
+
+.high-contrast .verse-indicator {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.light .verse-indicator {
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.dark .verse-indicator {
+  color: rgba(255, 255, 255, 0.8);
 }
 </style>
