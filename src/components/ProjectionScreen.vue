@@ -1,10 +1,10 @@
 <template>
   <div 
-    class="projection" 
+    ref="projectionRef" 
+    class="projection"
     :class="theme"
     tabindex="0"
     @keydown="handleKeydown"
-    ref="projectionRef"
   >
     <!-- NAK Logo in der rechten oberen Ecke -->
     <div class="nak-logo-container">
