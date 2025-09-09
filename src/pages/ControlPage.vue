@@ -8,7 +8,7 @@
         <div class="mb-4">
           <button 
             class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mb-4"
-            @click="openProjectorWindow"
+            @click="openProjector"
           >
             Projektor öffnen
           </button>
@@ -253,7 +253,7 @@ const nextSlide = computed(() => {
 const totalSlides = computed(() => slides.value.length);
 
 // Methoden zur Steuerung der Projektion
-const openProjectorWindow = () => {
+const openProjector = () => {
   // Öffne ein Fenster mit der Projektor-Seite oder aktualisiere das bestehende
   const songId = route.query.songId as string | undefined;
   const setlistId = route.query.setlistId as string | undefined;
@@ -357,7 +357,7 @@ const setProjectorWindow = (type: 'primary' | 'secondary' | 'fullscreen' | 'cust
     }
   } else {
     // Falls kein Fenster offen ist, öffne ein neues mit den Standardparametern
-    openProjectorWindow();
+    openProjector();
   }
 };
 
