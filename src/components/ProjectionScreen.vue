@@ -23,6 +23,7 @@
           mode="out-in"
           @before-enter="beforeEnter"
           @after-leave="afterLeave"
+          @after-enter="adjustFontSize"
         >
         <div 
           :key="props.currentIndex"
@@ -172,8 +173,11 @@ const totalSlides = computed(() => {
 const adjustFontSize = async () => {
   if (!projectionRef.value || !contentRef.value || !currentSlide.value) return;
   
-  // Warten auf das nächste Rendering
+  // Warten auf das nächste Rendering und sicherstellen, dass der DOM aktualisiert ist
   await nextTick();
+  
+  // Logging für Debugging
+  console.log('Adjusting font size for slide:', props.currentIndex);
   
   // Reserviere Platz für Header (oben) und Navigation/Footer (unten)
   const headerSpace = 100; // Platz für Liedtitel und Nummer
@@ -363,12 +367,21 @@ watch(() => projectionRef.value, (el) => {
 
 // Schriftgröße anpassen, wenn sich der Slide ändert
 watch(() => props.currentIndex, () => {
-  nextTick(() => adjustFontSize());
+  // Wir verwenden setTimeout, um sicherzustellen, dass das DOM vollständig aktualisiert wurde
+  nextTick(() => {
+    setTimeout(() => {
+      adjustFontSize();
+    }, 50);
+  });
 });
 
 // Schriftgröße anpassen, wenn sich die Slides ändern
 watch(() => props.slides, () => {
-  nextTick(() => adjustFontSize());
+  nextTick(() => {
+    setTimeout(() => {
+      adjustFontSize();
+    }, 50);
+  });
 }, { deep: true });
 
 // Schriftgröße anpassen, wenn sich die Fenstergröße ändert
@@ -388,12 +401,13 @@ const handleResize = () => {
 // Animation-Hooks
 const beforeEnter = () => {
   // Hier könnten wir zusätzliche Logik vor dem Einblenden hinzufügen
-  // z.B. Audio-Effekte oder andere Vorbereitungen
 };
 
 const afterLeave = () => {
-  // Nach dem Ausblenden können wir hier zusätzliche Aktionen ausführen
-  // z.B. Statistiken aktualisieren oder Ereignisse auslösen
+  // Nach dem Ausblenden die Schriftgröße anpassen
+  setTimeout(() => {
+    adjustFontSize();
+  }, 50);
 };
 </script>
 
