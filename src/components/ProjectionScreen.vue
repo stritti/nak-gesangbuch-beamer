@@ -234,7 +234,7 @@ const afterLeave = () => {
 <style scoped>
 .slide-fade-enter-active,
 .slide-fade-leave-active {
-  transition: all 0.5s ease;
+  transition: all 0.25s ease;
 }
 
 .slide-fade-enter-from {
