@@ -1,0 +1,149 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NAK Gesangbuch Schema",
+  "description": "Schema für die NAK Gesangbuch JSON-Datei (nakbuch_v5.4.0.json)",
+  "type": "object",
+  "required": ["version", "buecher", "lieder"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^5\\.[0-9]+\\.[0-9]+$",
+      "description": "Version der Datenstruktur (z.B. '5.4.0')"
+    },
+    "buecher": {
+      "type": "array",
+      "description": "Liste der Bücher",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "hymnCount", "rubrics"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Eindeutige ID des Buches (z.B. 'gb', 'cb')"
+          },
+          "title": {
+            "type": "string",
+            "description": "Titel des Buches"
+          },
+          "hymnCount": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Anzahl der Lieder im Buch"
+          },
+          "group": {
+            "type": "string",
+            "description": "Optionale Gruppierung des Buches"
+          },
+          "info": {
+            "type": "string",
+            "description": "Optionale Informationen zum Buch"
+          },
+          "rubrics": {
+            "type": "array",
+            "description": "Thematische Rubriken des Buches",
+            "items": {
+              "type": "object",
+              "required": ["buchId", "index", "title", "isMain"],
+              "properties": {
+                "buchId": {
+                  "type": "string",
+                  "description": "ID des zugehörigen Buches"
+                },
+                "index": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Index der Rubrik"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "Titel der Rubrik"
+                },
+                "isMain": {
+                  "type": "boolean",
+                  "description": "Gibt an, ob es sich um eine Hauptrubrik handelt"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "lieder": {
+      "type": "array",
+      "description": "Liste aller Lieder",
+      "items": {
+        "type": "object",
+        "required": ["buchId", "nummer", "rubricIndex", "title", "text"],
+        "properties": {
+          "buchId": {
+            "type": "string",
+            "description": "ID des zugehörigen Buches"
+          },
+          "nummer": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Nummer des Liedes im Buch"
+          },
+          "rubricIndex": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Index der zugehörigen Rubrik"
+          },
+          "title": {
+            "type": "string",
+            "description": "Titel des Liedes"
+          },
+          "text": {
+            "type": "string",
+            "description": "Volltext des Liedes mit Strophen und '/'-Zeilentrennern"
+          },
+          "copyright": {
+            "type": "string",
+            "description": "Copyright-Hinweis"
+          },
+          "taktart": {
+            "type": "string",
+            "description": "Taktart des Liedes"
+          },
+          "tonart": {
+            "type": "string",
+            "description": "Tonart des Liedes"
+          },
+          "startingPitches": {
+            "type": "string",
+            "description": "Anfangstöne"
+          },
+          "pdfPageIndex": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Seitenindex im PDF"
+          },
+          "pdfPageCount": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Anzahl der Seiten im PDF"
+          },
+          "links": {
+            "type": "array",
+            "description": "Externe Links (z.B. zu Audiodateien)",
+            "items": {
+              "type": "object",
+              "required": ["title", "url"],
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "Titel des Links"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri",
+                  "description": "URL des Links"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
