@@ -87,6 +87,131 @@ const prepareSlides = (song: Song | null) => {
 const currentSetlistIndex = ref(0);
 const setlistItems = ref<Array<{songId: string, verseIds?: string[]}>>([]);
 
+// Funktionen für die Setlist-Navigation
+const nextSong = () => {
+  if (setlistItems.value.length === 0 || currentSetlistIndex.value >= setlistItems.value.length - 1) {
+    return;
+  }
+
+  currentSetlistIndex.value++;
+  const nextItem = setlistItems.value[currentSetlistIndex.value];
+  const song = songStore.getSongById(nextItem.songId);
+
+  if (song) {
+    // Setze den Projektor zurück und lade das nächste Lied
+    projectionStore.reset();
+    prepareSlides(song);
+  
+    // Informiere das Steuerungsfenster über den Wechsel
+    if (window.opener) {
+      window.opener.postMessage({
+        type: 'setlistItemChanged',
+        currentIndex: currentSetlistIndex.value,
+        totalItems: setlistItems.value.length,
+        currentSongId: song.id
+      }, '*');
+    }
+  }
+};
+
+const prevSong = () => {
+  if (setlistItems.value.length === 0 || currentSetlistIndex.value <= 0) {
+    return;
+  }
+
+  currentSetlistIndex.value--;
+  const prevItem = setlistItems.value[currentSetlistIndex.value];
+  const song = songStore.getSongById(prevItem.songId);
+
+  if (song) {
+    // Setze den Projektor zurück und lade das vorherige Lied
+    projectionStore.reset();
+    prepareSlides(song);
+  
+    // Informiere das Steuerungsfenster über den Wechsel
+    if (window.opener) {
+      window.opener.postMessage({
+        type: 'setlistItemChanged',
+        currentIndex: currentSetlistIndex.value,
+        totalItems: setlistItems.value.length,
+        currentSongId: song.id
+      }, '*');
+    }
+  }
+};
+
+// Event-Listener für Nachrichten vom Steuerungsfenster
+const handleMessage = (event: MessageEvent) => {
+  // Hier können wir weitere Nachrichten vom Steuerungsfenster verarbeiten
+  if (event.data) {
+    switch (event.data.type) {
+      case 'requestState':
+        // Sende den aktuellen Zustand zurück
+        if (window.opener) {
+          window.opener.postMessage({
+            type: 'projectorState',
+            isFullscreen: document.fullscreenElement !== null,
+            currentIndex: projectionStore.currentIndex,
+            totalSlides: slides.value.length,
+            currentSongId: currentSong.value?.id,
+            inSetlist: setlistItems.value.length > 0,
+            currentSetlistIndex: currentSetlistIndex.value,
+            totalSetlistItems: setlistItems.value.length
+          }, '*');
+        }
+        break;
+      
+      case 'nextSong':
+        nextSong();
+        break;
+      
+      case 'prevSong':
+        prevSong();
+        break;
+      
+      case 'jumpToSong':
+        if (event.data.songId) {
+          const song = songStore.getSongById(event.data.songId);
+          if (song) {
+            projectionStore.reset();
+            prepareSlides(song);
+          }
+        }
+        break;
+    }
+  }
+};
+
+// Storage-Event-Handler
+const handleStorageChange = (event: StorageEvent) => {
+  // Prüfe, ob die Änderung für dieses Fenster relevant ist
+  if (event.key === 'lastProjectedSongId' && event.newValue) {
+    const songId = event.newValue;
+    const song = songStore.getSongById(songId);
+    if (song) {
+      projectionStore.reset();
+      prepareSlides(song);
+    }
+  } else if (event.key === 'lastProjectedSetlistId' && event.newValue) {
+    const setlistId = event.newValue;
+    const setlist = setlistStore.setlists.find(s => s.id === setlistId);
+    if (setlist && setlist.items.length > 0) {
+      setlistItems.value = setlist.items;
+      currentSetlistIndex.value = 0;
+    
+      const firstItem = setlist.items[0];
+      const song = songStore.getSongById(firstItem.songId);
+      if (song) {
+        projectionStore.reset();
+        prepareSlides(song);
+      }
+    }
+  }
+};
+
+// Referenz für das Interval
+let checkInterval: number | null = null;
+
 // Lade das Lied basierend auf der URL oder der Setlist
 onMounted(async () => {
   // Setze den Projektor zurück
@@ -152,134 +277,12 @@ onMounted(async () => {
       }
     }
   }
-  
-  // Funktionen für die Setlist-Navigation
-  const nextSong = () => {
-    if (setlistItems.value.length === 0 || currentSetlistIndex.value >= setlistItems.value.length - 1) {
-      return;
-    }
-  
-    currentSetlistIndex.value++;
-    const nextItem = setlistItems.value[currentSetlistIndex.value];
-    const song = songStore.getSongById(nextItem.songId);
-  
-    if (song) {
-      // Setze den Projektor zurück und lade das nächste Lied
-      projectionStore.reset();
-      prepareSlides(song);
-    
-      // Informiere das Steuerungsfenster über den Wechsel
-      if (window.opener) {
-        window.opener.postMessage({
-          type: 'setlistItemChanged',
-          currentIndex: currentSetlistIndex.value,
-          totalItems: setlistItems.value.length,
-          currentSongId: song.id
-        }, '*');
-      }
-    }
-  };
-
-  const prevSong = () => {
-    if (setlistItems.value.length === 0 || currentSetlistIndex.value <= 0) {
-      return;
-    }
-  
-    currentSetlistIndex.value--;
-    const prevItem = setlistItems.value[currentSetlistIndex.value];
-    const song = songStore.getSongById(prevItem.songId);
-  
-    if (song) {
-      // Setze den Projektor zurück und lade das vorherige Lied
-      projectionStore.reset();
-      prepareSlides(song);
-    
-      // Informiere das Steuerungsfenster über den Wechsel
-      if (window.opener) {
-        window.opener.postMessage({
-          type: 'setlistItemChanged',
-          currentIndex: currentSetlistIndex.value,
-          totalItems: setlistItems.value.length,
-          currentSongId: song.id
-        }, '*');
-      }
-    }
-  };
-
-  // Event-Listener für Nachrichten vom Steuerungsfenster
-  const handleMessage = (event: MessageEvent) => {
-    // Hier können wir weitere Nachrichten vom Steuerungsfenster verarbeiten
-    if (event.data) {
-      switch (event.data.type) {
-        case 'requestState':
-          // Sende den aktuellen Zustand zurück
-          if (window.opener) {
-            window.opener.postMessage({
-              type: 'projectorState',
-              isFullscreen: document.fullscreenElement !== null,
-              currentIndex: projectionStore.currentIndex,
-              totalSlides: slides.value.length,
-              currentSongId: currentSong.value?.id,
-              inSetlist: setlistItems.value.length > 0,
-              currentSetlistIndex: currentSetlistIndex.value,
-              totalSetlistItems: setlistItems.value.length
-            }, '*');
-          }
-          break;
-        
-        case 'nextSong':
-          nextSong();
-          break;
-        
-        case 'prevSong':
-          prevSong();
-          break;
-        
-        case 'jumpToSong':
-          if (event.data.songId) {
-            const song = songStore.getSongById(event.data.songId);
-            if (song) {
-              projectionStore.reset();
-              prepareSlides(song);
-            }
-          }
-          break;
-      }
-    }
-  };
 
   // Setze einen Marker, dass der Projektor geöffnet ist
   localStorage.setItem('projectorWindowOpen', 'true');
 
-  // Höre auf Storage-Änderungen, um auf Projektionsanfragen zu reagieren
-  const handleStorageChange = (event: StorageEvent) => {
-    // Prüfe, ob die Änderung für dieses Fenster relevant ist
-    if (event.key === 'lastProjectedSongId' && event.newValue) {
-      const songId = event.newValue;
-      const song = songStore.getSongById(songId);
-      if (song) {
-        projectionStore.reset();
-        prepareSlides(song);
-      }
-    } else if (event.key === 'lastProjectedSetlistId' && event.newValue) {
-      const setlistId = event.newValue;
-      const setlist = setlistStore.setlists.find(s => s.id === setlistId);
-      if (setlist && setlist.items.length > 0) {
-        setlistItems.value = setlist.items;
-        currentSetlistIndex.value = 0;
-      
-        const firstItem = setlist.items[0];
-        const song = songStore.getSongById(firstItem.songId);
-        if (song) {
-          projectionStore.reset();
-          prepareSlides(song);
-        }
-      }
-    }
-  };
-
+  // Event-Listener registrieren
   window.addEventListener('storage', handleStorageChange);
-  
   window.addEventListener('message', handleMessage);
   
   // Informiere das Steuerungsfenster, dass der Projektor bereit ist
@@ -298,7 +301,7 @@ onMounted(async () => {
   window.name = 'projector';
   
   // Setze einen Intervall, um regelmäßig zu prüfen, ob dieses Fenster noch das aktive Projektorfenster ist
-  const checkInterval = setInterval(() => {
+  checkInterval = window.setInterval(() => {
     // Setze einen Marker, dass dieses Fenster noch aktiv ist
     localStorage.setItem('projectorWindowLastActive', Date.now().toString());
   }, 1000);
