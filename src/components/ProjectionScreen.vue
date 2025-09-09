@@ -199,11 +199,14 @@ const handleMessage = (event: MessageEvent) => {
   }
 };
 
+// Referenz für die Unbind-Funktion
+let unbindHotkeys: (() => void) | null = null;
+
 // Lifecycle hooks
 onMounted(() => {
   if (projectionRef.value) {
     // Hotkeys binden
-    const unbind = bindHotkeys(projectionRef.value, {
+    unbindHotkeys = bindHotkeys(projectionRef.value, {
       next: () => emit('next'),
       prev: () => emit('prev'),
       blackout: () => emit('blackout'),
@@ -226,15 +229,10 @@ onMounted(() => {
 
 // Cleanup
 onUnmounted(() => {
-  if (projectionRef.value) {
-    // Hotkeys unbinden (die Funktion wurde in onMounted definiert)
-    const unbind = bindHotkeys(projectionRef.value, {
-      next: () => emit('next'),
-      prev: () => emit('prev'),
-      blackout: () => emit('blackout'),
-      fullscreen: toggleFullscreen
-    });
-    unbind();
+  // Hotkeys unbinden
+  if (unbindHotkeys) {
+    unbindHotkeys();
+    unbindHotkeys = null;
   }
   
   // Wake-Lock freigeben

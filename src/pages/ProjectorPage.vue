@@ -308,7 +308,11 @@ onMounted(async () => {
 onUnmounted(() => {
   window.removeEventListener('message', handleMessage);
   window.removeEventListener('storage', handleStorageChange);
-  clearInterval(checkInterval);
+  
+  if (checkInterval !== null) {
+    window.clearInterval(checkInterval);
+    checkInterval = null;
+  }
   
   // Entferne den Marker, dass der Projektor geöffnet ist, wenn dieses Fenster geschlossen wird
   localStorage.removeItem('projectorWindowOpen');

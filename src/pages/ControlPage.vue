@@ -366,6 +366,37 @@ const setProjectorWindow = (type: 'primary' | 'secondary' | 'fullscreen' | 'cust
   }
 };
 
+// Event-Listener für Nachrichten vom Projektor-Fenster
+const handleMessage = (event: MessageEvent) => {
+  if (event.data) {
+    switch (event.data.type) {
+      case 'fullscreenChange':
+        projectionStore.setFullscreen(event.data.isFullscreen);
+        break;
+        
+      case 'projectorState':
+        // Aktualisiere den Zustand basierend auf den Informationen vom Projektor
+        if (event.data.inSetlist) {
+          inSetlist.value = true;
+          currentSetlistIndex.value = event.data.currentSetlistIndex;
+          totalSetlistItems.value = event.data.totalSetlistItems;
+        }
+        break;
+        
+      case 'setlistLoaded':
+        inSetlist.value = true;
+        currentSetlistIndex.value = 0;
+        totalSetlistItems.value = event.data.totalItems;
+        break;
+        
+      case 'setlistItemChanged':
+        currentSetlistIndex.value = event.data.currentIndex;
+        totalSetlistItems.value = event.data.totalItems;
+        break;
+    }
+  }
+};
+
 // Lade das Lied basierend auf der URL oder der Setlist
 onMounted(async () => {
   // Setze den Projektor zurück
@@ -394,43 +425,13 @@ onMounted(async () => {
     }
   }
   
-  // Event-Listener für Nachrichten vom Projektor-Fenster
-  const handleMessage = (event: MessageEvent) => {
-    if (event.data) {
-      switch (event.data.type) {
-        case 'fullscreenChange':
-          projectionStore.setFullscreen(event.data.isFullscreen);
-          break;
-          
-        case 'projectorState':
-          // Aktualisiere den Zustand basierend auf den Informationen vom Projektor
-          if (event.data.inSetlist) {
-            inSetlist.value = true;
-            currentSetlistIndex.value = event.data.currentSetlistIndex;
-            totalSetlistItems.value = event.data.totalSetlistItems;
-          }
-          break;
-          
-        case 'setlistLoaded':
-          inSetlist.value = true;
-          currentSetlistIndex.value = 0;
-          totalSetlistItems.value = event.data.totalItems;
-          break;
-          
-        case 'setlistItemChanged':
-          currentSetlistIndex.value = event.data.currentIndex;
-          totalSetlistItems.value = event.data.totalItems;
-          break;
-      }
-    }
-  };
-  
+  // Event-Listener für Nachrichten vom Projektor-Fenster registrieren
   window.addEventListener('message', handleMessage);
-  
-  // Cleanup
-  onUnmounted(() => {
-    window.removeEventListener('message', handleMessage);
-  });
+});
+
+// Cleanup beim Unmount
+onUnmounted(() => {
+  window.removeEventListener('message', handleMessage);
 });
 
 // Überwache den aktuellen Index und schalte auf Blackout, wenn das Ende erreicht ist
