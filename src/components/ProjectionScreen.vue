@@ -7,7 +7,17 @@
     ref="projectionRef"
   >
     <div v-if="blackout" class="w-full h-full bg-black"></div>
-    <div v-else class="flex items-center justify-center h-full p-8">
+    <div v-else class="flex flex-col h-full p-8">
+      <!-- Liedtitel und Nummer -->
+      <div v-if="songTitle || songNumber" class="song-header text-center mb-4 opacity-80">
+        <h1 class="text-2xl font-bold">
+          <span v-if="songNumber" class="song-number mr-2">{{ songNumber }}</span>
+          <span v-if="songTitle" class="song-title">{{ songTitle }}</span>
+        </h1>
+      </div>
+      
+      <!-- Hauptinhalt (zentriert) -->
+      <div class="flex-grow flex items-center justify-center">
       <transition 
         name="slide-fade" 
         mode="out-in"
@@ -75,6 +85,8 @@ interface Props {
   blackout?: boolean;
   maxLinesPerSlide?: number;
   verseNumbers?: string[]; // Strophennummern wie "1", "2", "R", etc.
+  songTitle?: string;      // Titel des Liedes
+  songNumber?: string;     // Nummer des Liedes
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -85,7 +97,9 @@ const props = withDefaults(defineProps<Props>(), {
   theme: 'high-contrast',
   blackout: false,
   maxLinesPerSlide: 4,
-  verseNumbers: () => []
+  verseNumbers: () => [],
+  songTitle: '',
+  songNumber: ''
 });
 
 // Emits
@@ -391,5 +405,30 @@ const afterLeave = () => {
 
 .dark .verse-number.active {
   background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Styling für den Liedtitel und die Nummer */
+.song-header {
+  position: absolute;
+  top: 1rem;
+  left: 0;
+  right: 0;
+  padding: 0.5rem;
+}
+
+.song-number {
+  font-weight: bold;
+}
+
+.high-contrast .song-header {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.light .song-header {
+  color: rgba(0, 0, 0, 0.9);
+}
+
+.dark .song-header {
+  color: rgba(255, 255, 255, 0.9);
 }
 </style>
