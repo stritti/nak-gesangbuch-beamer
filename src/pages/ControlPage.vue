@@ -14,7 +14,7 @@
           :current-index="projectionStore.currentIndex"
           :total-slides="totalSlides"
           :is-fullscreen="projectionStore.isFullscreen"
-          @next="nextSlide"
+          @next="goToNextSlide"
           @prev="prevSlide"
           @blackout="toggleBlackout"
           @fullscreen="toggleFullscreen"
@@ -158,7 +158,7 @@ const prevSlide = () => {
   sendCommand('prev');
 };
 
-const nextSlide = () => {
+const goToNextSlide = () => {
   projectionStore.next();
   sendCommand('next');
 };
