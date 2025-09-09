@@ -140,14 +140,14 @@ export class NakRepository {
     
     // Wenn keine Suchanfrage und keine Filter, alle Songs zurückgeben
     if (!query.trim() && (!filters || (!filters.buchId && !filters.rubric))) {
-      return allSongs;
+      return this.sortSongsByNumber(allSongs);
     }
     
     // Suchanfrage normalisieren
     const normalizedQuery = query.trim().toLowerCase();
     
     // Filtern nach Suchanfrage und Filtern
-    return allSongs.filter(song => {
+    const filteredSongs = allSongs.filter(song => {
       // Nach Buch-ID filtern
       if (filters?.buchId && song.source?.buchId !== filters.buchId) {
         return false;
@@ -179,6 +179,28 @@ export class NakRepository {
           line.toLowerCase().includes(normalizedQuery)
         )
       );
+    });
+    
+    // Sortiere die gefilterten Ergebnisse
+    return this.sortSongsByNumber(filteredSongs);
+  }
+
+  /**
+   * Sortiert Songs nach Buch-ID und Nummer
+   * @param songs Die zu sortierenden Songs
+   * @returns Sortierte Songs
+   */
+  private sortSongsByNumber(songs: Song[]): Song[] {
+    return [...songs].sort((a, b) => {
+      // Zuerst nach Buch-ID sortieren
+      if (a.source?.buchId !== b.source?.buchId) {
+        return (a.source?.buchId || '').localeCompare(b.source?.buchId || '');
+      }
+      
+      // Dann nach Nummer sortieren (als Zahl, nicht als String)
+      const numA = a.number ? parseInt(a.number, 10) : 0;
+      const numB = b.number ? parseInt(b.number, 10) : 0;
+      return numA - numB;
     });
   }
 
