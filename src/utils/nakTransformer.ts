@@ -20,6 +20,18 @@ type NAKSongInternal = {
   topics?: string[];
 };
 
+// Typguard-Funktion, um zu prüfen, ob ein Objekt dem NAKSongInternal-Typ entspricht
+function isNAKSongInternal(obj: unknown): obj is NAKSongInternal {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'title' in obj &&
+    typeof obj.title === 'string' &&
+    'verses' in obj &&
+    typeof obj.verses === 'object'
+  );
+}
+
 /**
  * Transformiert NAK-Gesangbuch-Daten in unser internes Format
  */
