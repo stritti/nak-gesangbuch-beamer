@@ -13,6 +13,14 @@
       </div>
     </div>
     
+    <!-- Buchinformation anzeigen -->
+    <p v-if="song.source?.buchId" class="text-sm font-medium text-blue-600 mt-1">
+      {{ getBookName(song.source.buchId) }}
+      <span v-if="song.source.rubric" class="text-gray-500">
+        ({{ song.source.rubric }})
+      </span>
+    </p>
+    
     <div class="mt-2 text-sm text-gray-600">
       <p v-if="song.authors && song.authors.length">
         {{ song.authors.join(', ') }}
@@ -81,4 +89,16 @@ defineEmits<{
   (e: 'add', id: string): void;
   (e: 'project', id: string): void;
 }>();
+
+// Hilfsfunktion, um den Buchnamen aus der Buch-ID zu ermitteln
+function getBookName(buchId: string): string {
+  const bookNames: Record<string, string> = {
+    'gb': 'Gesangbuch',
+    'cb': 'Chorbuch',
+    'jl': 'Jugendliederbuch',
+    'kl': 'Kinderliederbuch'
+  };
+  
+  return bookNames[buchId] || buchId.toUpperCase();
+}
 </script>

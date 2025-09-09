@@ -12,6 +12,9 @@
           <h4 class="font-medium">{{ song?.title || 'Unbekanntes Lied' }}</h4>
           <p v-if="song?.number" class="text-sm text-gray-600">
             {{ song.number }}
+            <span v-if="song.source?.buchId" class="ml-1 text-blue-600">
+              ({{ getBookName(song.source.buchId) }})
+            </span>
           </p>
         </div>
       </div>
@@ -69,4 +72,16 @@ defineEmits<{
   (e: 'edit'): void;
   (e: 'remove'): void;
 }>();
+
+// Hilfsfunktion, um den Buchnamen aus der Buch-ID zu ermitteln
+function getBookName(buchId: string): string {
+  const bookNames: Record<string, string> = {
+    'gb': 'Gesangbuch',
+    'cb': 'Chorbuch',
+    'jl': 'Jugendliederbuch',
+    'kl': 'Kinderliederbuch'
+  };
+  
+  return bookNames[buchId] || buchId.toUpperCase();
+}
 </script>
