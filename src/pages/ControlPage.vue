@@ -261,7 +261,7 @@ const openProjector = () => {
   const setlistId = route.query.setlistId as string | undefined;
   
   // Prüfe, ob bereits ein Projektorfenster existiert
-  const isOpen = isProjectorWindowOpen();
+  const isOpen = isProjectorOpen();
   
   if (songId) {
     projectorWindow.value = projectSongToWindow(songId);
