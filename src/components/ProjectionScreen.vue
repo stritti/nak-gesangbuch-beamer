@@ -45,9 +45,9 @@
     </div>
     
     <!-- Strophennummern-Navigation -->
-    <div v-if="!blackout && verseNumbers.length > 0" class="absolute bottom-0 left-0 right-0 p-4 flex justify-center gap-3 opacity-50">
+    <div v-if="!blackout && extractedVerseNumbers.length > 0" class="absolute bottom-0 left-0 right-0 p-4 flex justify-center gap-3 opacity-50">
       <button 
-        v-for="(verseNum, idx) in verseNumbers" 
+        v-for="(verseNum, idx) in extractedVerseNumbers" 
         :key="verseNum"
         class="verse-number px-2 py-1 rounded-full text-sm"
         :class="{ 'active': idx === currentVerseIndex }"
@@ -101,13 +101,26 @@ const projectionRef = ref<HTMLElement | null>(null);
 const contentRef = ref<HTMLElement | null>(null);
 const computedFontSize = ref(props.fontSize);
 
+// Extrahiere Strophennummern aus den Slides, wenn keine explizit übergeben wurden
+const extractedVerseNumbers = computed(() => {
+  if (props.verseNumbers && props.verseNumbers.length > 0) {
+    return props.verseNumbers;
+  }
+  
+  // Versuche, Strophennummern aus den Slides zu extrahieren
+  if (!props.slides || props.slides.length === 0) return [];
+  
+  // Einfache Nummerierung: 1, 2, 3, ...
+  return Array.from({ length: props.slides.length }, (_, i) => String(i + 1));
+});
+
 // Berechne den aktuellen Strophenindex basierend auf dem currentIndex
 const currentVerseIndex = computed(() => {
-  if (!props.slides.length || !props.verseNumbers.length) return 0;
+  if (!props.slides.length) return 0;
   
   // Berechne, zu welcher Strophe der aktuelle Slide gehört
   let slideCount = 0;
-  for (let i = 0; i < props.verseNumbers.length; i++) {
+  for (let i = 0; i < props.slides.length; i++) {
     const verse = props.slides[i];
     if (!verse) continue;
     
@@ -200,7 +213,7 @@ const handleKeydown = (e: KeyboardEvent) => {
   const key = e.key;
   if (/^[0-9]$/.test(key)) {
     const verseIndex = parseInt(key) - 1; // 1 wird zu Index 0, etc.
-    if (verseIndex >= 0 && verseIndex < props.verseNumbers.length) {
+    if (verseIndex >= 0 && verseIndex < props.slides.length) {
       jumpToVerse(verseIndex);
     }
   }
@@ -208,7 +221,7 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 // Zu einer bestimmten Strophe springen
 const jumpToVerse = (verseIndex: number) => {
-  if (verseIndex < 0 || verseIndex >= props.verseNumbers.length) return;
+  if (verseIndex < 0 || verseIndex >= props.slides.length) return;
   
   // Berechne den Slide-Index für die gewählte Strophe
   let slideIndex = 0;
