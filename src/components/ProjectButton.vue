@@ -12,6 +12,7 @@
 
 <script setup lang="ts">
 import { useProjection } from '@/composables/useProjection';
+import { isProjectorOpen } from '@/utils/projection';
 
 interface Props {
   songId?: string;
@@ -20,13 +21,28 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const { projectSongToWindow, projectSetlistToWindow } = useProjection();
+const { projectorWindow, projectSongToWindow, projectSetlistToWindow, isProjectorWindowOpen } = useProjection();
 
 const projectItem = () => {
+  // Prüfe, ob ein Projektorfenster bereits geöffnet ist
+  const isOpen = isProjectorOpen();
+  
   if (props.songId) {
-    projectSongToWindow(props.songId);
+    // Projiziere das Lied
+    const window = projectSongToWindow(props.songId);
+    
+    // Wenn das Fenster nicht geöffnet war, zeige eine Meldung an
+    if (!isOpen && window) {
+      console.log('Projektor wurde geöffnet und zeigt jetzt das Lied an.');
+    }
   } else if (props.setlistId) {
-    projectSetlistToWindow(props.setlistId);
+    // Projiziere die Setlist
+    const window = projectSetlistToWindow(props.setlistId);
+    
+    // Wenn das Fenster nicht geöffnet war, zeige eine Meldung an
+    if (!isOpen && window) {
+      console.log('Projektor wurde geöffnet und zeigt jetzt die Setlist an.');
+    }
   }
 };
 </script>

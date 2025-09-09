@@ -1,11 +1,18 @@
-import { ref } from 'vue';
-import { projectSong, projectSetlist, isProjectorOpen } from '@/utils/projection';
+import { ref, onMounted, onUnmounted } from 'vue';
+import { projectSong, projectSetlist, isProjectorOpen, getProjectorWindow } from '@/utils/projection';
 
 /**
  * Composable für die Projektion von Liedern und Setlists
  */
 export function useProjection() {
   const projectorWindow = ref<Window | null>(null);
+  
+  // Beim Initialisieren prüfen, ob ein Projektorfenster bereits geöffnet ist
+  onMounted(() => {
+    if (isProjectorOpen()) {
+      projectorWindow.value = getProjectorWindow();
+    }
+  });
   
   /**
    * Projiziert ein Lied im Projektorfenster
@@ -14,6 +21,7 @@ export function useProjection() {
    */
   const projectSongToWindow = (songId: string) => {
     projectorWindow.value = projectSong(songId);
+    return projectorWindow.value;
   };
   
   /**
@@ -23,6 +31,7 @@ export function useProjection() {
    */
   const projectSetlistToWindow = (setlistId: string) => {
     projectorWindow.value = projectSetlist(setlistId);
+    return projectorWindow.value;
   };
   
   /**

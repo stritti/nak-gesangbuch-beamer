@@ -173,6 +173,32 @@ const toggleFullscreen = async () => {
   }
 };
 
+// Event-Listener für Nachrichten vom Steuerungsfenster
+const handleMessage = (event: MessageEvent) => {
+  if (event.data) {
+    switch (event.data.type) {
+      case 'toggleFullscreen':
+        toggleFullscreen();
+        // Sende Bestätigung zurück
+        if (window.opener) {
+          window.opener.postMessage({
+            type: 'fullscreenChange',
+            isFullscreen: document.fullscreenElement !== null
+          }, '*');
+        }
+        break;
+      
+      case 'updateSlides':
+        // Hier könnten wir Slides aktualisieren, wenn sie vom Steuerungsfenster gesendet werden
+        if (event.data.slides) {
+          // Hier müssten wir die Slides aktualisieren, aber das hängt von der Implementierung ab
+          console.log('Slides aktualisiert:', event.data.slides);
+        }
+        break;
+    }
+  }
+};
+
 // Lifecycle hooks
 onMounted(() => {
   if (projectionRef.value) {
@@ -193,42 +219,30 @@ onMounted(() => {
     // Auf Größenänderungen reagieren
     window.addEventListener('resize', adjustFontSize);
     
-    // Event-Listener für Nachrichten vom Steuerungsfenster
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data) {
-        switch (event.data.type) {
-          case 'toggleFullscreen':
-            toggleFullscreen();
-            // Sende Bestätigung zurück
-            if (window.opener) {
-              window.opener.postMessage({
-                type: 'fullscreenChange',
-                isFullscreen: document.fullscreenElement !== null
-              }, '*');
-            }
-            break;
-          
-          case 'updateSlides':
-            // Hier könnten wir Slides aktualisieren, wenn sie vom Steuerungsfenster gesendet werden
-            if (event.data.slides) {
-              // Hier müssten wir die Slides aktualisieren, aber das hängt von der Implementierung ab
-              console.log('Slides aktualisiert:', event.data.slides);
-            }
-            break;
-        }
-      }
-    };
-    
+    // Event-Listener für Nachrichten vom Steuerungsfenster registrieren
     window.addEventListener('message', handleMessage);
-    
-    // Cleanup
-    onUnmounted(() => {
-      unbind();
-      projectionService.releaseWakeLock().catch(console.error);
-      window.removeEventListener('resize', adjustFontSize);
-      window.removeEventListener('message', handleMessage);
-    });
   }
+});
+
+// Cleanup
+onUnmounted(() => {
+  if (projectionRef.value) {
+    // Hotkeys unbinden (die Funktion wurde in onMounted definiert)
+    const unbind = bindHotkeys(projectionRef.value, {
+      next: () => emit('next'),
+      prev: () => emit('prev'),
+      blackout: () => emit('blackout'),
+      fullscreen: toggleFullscreen
+    });
+    unbind();
+  }
+  
+  // Wake-Lock freigeben
+  projectionService.releaseWakeLock().catch(console.error);
+  
+  // Event-Listener entfernen
+  window.removeEventListener('resize', adjustFontSize);
+  window.removeEventListener('message', handleMessage);
 });
 
 // Fokus auf das Projektionselement setzen, wenn es gemountet wird
