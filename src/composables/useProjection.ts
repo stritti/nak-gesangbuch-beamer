@@ -9,9 +9,47 @@ export function useProjection() {
   
   // Beim Initialisieren prüfen, ob ein Projektorfenster bereits geöffnet ist
   onMounted(() => {
+    // Versuche, das Projektorfenster zu finden
     if (isProjectorOpen()) {
       projectorWindow.value = getProjectorWindow();
     }
+    
+    // Event-Listener für Projektion-Events
+    const handleSongProjected = (event: CustomEvent) => {
+      if (event.detail && event.detail.songId) {
+        // Aktualisiere die Referenz auf das Projektorfenster
+        projectorWindow.value = getProjectorWindow();
+      }
+    };
+    
+    const handleSetlistProjected = (event: CustomEvent) => {
+      if (event.detail && event.detail.setlistId) {
+        // Aktualisiere die Referenz auf das Projektorfenster
+        projectorWindow.value = getProjectorWindow();
+      }
+    };
+    
+    // Registriere die Event-Listener
+    window.addEventListener('songProjected', handleSongProjected as EventListener);
+    window.addEventListener('setlistProjected', handleSetlistProjected as EventListener);
+    
+    // Prüfe regelmäßig, ob das Projektorfenster noch geöffnet ist
+    const checkInterval = setInterval(() => {
+      if (projectorWindow.value && projectorWindow.value.closed) {
+        // Wenn das Fenster geschlossen wurde, setze die Referenz zurück
+        projectorWindow.value = null;
+      } else if (!projectorWindow.value && isProjectorOpen()) {
+        // Wenn kein Fenster referenziert ist, aber eines geöffnet ist, aktualisiere die Referenz
+        projectorWindow.value = getProjectorWindow();
+      }
+    }, 1000);
+    
+    // Cleanup beim Unmount
+    onUnmounted(() => {
+      window.removeEventListener('songProjected', handleSongProjected as EventListener);
+      window.removeEventListener('setlistProjected', handleSetlistProjected as EventListener);
+      clearInterval(checkInterval);
+    });
   });
   
   /**
@@ -41,10 +79,18 @@ export function useProjection() {
     return isProjectorOpen();
   };
   
+  /**
+   * Sendet eine Nachricht an das Projektorfenster
+   */
+  const sendMessageToProjectorWindow = (message: any) => {
+    return sendMessageToProjector(projectorWindow.value, message);
+  };
+  
   return {
     projectorWindow,
     projectSongToWindow,
     projectSetlistToWindow,
-    isProjectorWindowOpen
+    isProjectorWindowOpen,
+    sendMessageToProjectorWindow
   };
 }

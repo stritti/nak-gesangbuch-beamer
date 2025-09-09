@@ -304,6 +304,9 @@ onMounted(async () => {
   checkInterval = window.setInterval(() => {
     // Setze einen Marker, dass dieses Fenster noch aktiv ist
     localStorage.setItem('projectorWindowLastActive', Date.now().toString());
+    
+    // Broadcast an alle Tabs, dass dieses Fenster das aktive Projektorfenster ist
+    localStorage.setItem('activeProjectorId', window.name);
   }, 1000);
 });
 

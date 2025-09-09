@@ -260,12 +260,22 @@ const openProjector = () => {
   const songId = route.query.songId as string | undefined;
   const setlistId = route.query.setlistId as string | undefined;
   
+  // Prüfe, ob bereits ein Projektorfenster existiert
+  const isOpen = isProjectorOpen();
+  
   if (songId) {
     projectorWindow.value = projectSongToWindow(songId);
   } else if (setlistId) {
     projectorWindow.value = projectSetlistToWindow(setlistId);
   } else {
     projectorWindow.value = openProjectorWindow({});
+  }
+  
+  // Wenn das Fenster neu geöffnet wurde, zeige eine Meldung an
+  if (!isOpen && projectorWindow.value) {
+    console.log('Projektor wurde geöffnet.');
+  } else if (projectorWindow.value) {
+    console.log('Projektor wurde aktualisiert.');
   }
 };
 
@@ -346,19 +356,35 @@ const setProjectorWindow = (type: 'primary' | 'secondary' | 'fullscreen' | 'cust
   // Speichere die Einstellungen für die nächste Sitzung
   localStorage.setItem('projectorWindowFeatures', windowFeatures);
   
-  // Wenn ein Projektor-Fenster bereits geöffnet ist, aktualisiere es mit den neuen Einstellungen
-  if (projectorWindow.value && !projectorWindow.value.closed) {
-    // Speichere die aktuelle URL
-    const url = projectorWindow.value.location.href;
-    
-    // Schließe das aktuelle Fenster
-    projectorWindow.value.close();
-    
-    // Öffne ein neues Fenster mit den aktualisierten Einstellungen
-    projectorWindow.value = window.open(url, 'projector', windowFeatures);
-    
-    if (projectorWindow.value) {
-      projectorWindow.value.focus();
+  // Prüfe, ob bereits ein Projektorfenster existiert
+  const isOpen = isProjectorOpen();
+  
+  if (isOpen) {
+    // Wenn ein Projektor-Fenster bereits geöffnet ist, aktualisiere es mit den neuen Einstellungen
+    if (projectorWindow.value && !projectorWindow.value.closed) {
+      // Speichere die aktuelle URL
+      const url = projectorWindow.value.location.href;
+      
+      // Schließe das aktuelle Fenster
+      projectorWindow.value.close();
+      
+      // Öffne ein neues Fenster mit den aktualisierten Einstellungen
+      projectorWindow.value = window.open(url, 'projector', windowFeatures);
+      
+      if (projectorWindow.value) {
+        projectorWindow.value.focus();
+      }
+    } else {
+      // Wenn wir keine direkte Referenz haben, aber ein Fenster existiert
+      const existingWindow = getProjectorWindow();
+      if (existingWindow) {
+        const url = existingWindow.location.href;
+        existingWindow.close();
+        projectorWindow.value = window.open(url, 'projector', windowFeatures);
+        if (projectorWindow.value) {
+          projectorWindow.value.focus();
+        }
+      }
     }
   } else {
     // Falls kein Fenster offen ist, öffne ein neues mit den Standardparametern

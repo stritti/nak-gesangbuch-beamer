@@ -25,7 +25,7 @@ const { projectorWindow, projectSongToWindow, projectSetlistToWindow, isProjecto
 
 const projectItem = () => {
   // Prüfe, ob ein Projektorfenster bereits geöffnet ist
-  const isOpen = isProjectorOpen();
+  const isOpen = isProjectorWindowOpen();
   
   if (props.songId) {
     // Projiziere das Lied
@@ -34,6 +34,8 @@ const projectItem = () => {
     // Wenn das Fenster nicht geöffnet war, zeige eine Meldung an
     if (!isOpen && window) {
       console.log('Projektor wurde geöffnet und zeigt jetzt das Lied an.');
+    } else if (window) {
+      console.log('Lied wird im vorhandenen Projektor angezeigt.');
     }
   } else if (props.setlistId) {
     // Projiziere die Setlist
@@ -42,6 +44,8 @@ const projectItem = () => {
     // Wenn das Fenster nicht geöffnet war, zeige eine Meldung an
     if (!isOpen && window) {
       console.log('Projektor wurde geöffnet und zeigt jetzt die Setlist an.');
+    } else if (window) {
+      console.log('Setlist wird im vorhandenen Projektor angezeigt.');
     }
   }
 };
