@@ -20,6 +20,28 @@
           </p>
         </div>
         
+        <!-- Setlist-Navigation, falls eine Setlist aktiv ist -->
+        <div v-if="inSetlist" class="mb-4 bg-white rounded-lg shadow-md p-4">
+          <h3 class="text-lg font-semibold mb-2">Setlist-Navigation</h3>
+          <div class="flex justify-between items-center">
+            <button 
+              class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+              @click="handlePrevSong"
+              :disabled="currentSetlistIndex <= 0"
+            >
+              Vorheriges Lied
+            </button>
+            <span class="text-sm">{{ currentSetlistIndex + 1 }} / {{ totalSetlistItems }}</span>
+            <button 
+              class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+              @click="handleNextSong"
+              :disabled="currentSetlistIndex >= totalSetlistItems - 1"
+            >
+              Nächstes Lied
+            </button>
+          </div>
+        </div>
+        
         <ControlPanel
           :current-slide="currentSlide"
           :next-slide="nextSlide"
@@ -149,6 +171,11 @@ const currentSong = ref<Song | null>(null);
 const projectorWindow = ref<Window | null>(null);
 const showSettings = ref(false);
 
+// Setlist-Zustand
+const inSetlist = ref(false);
+const currentSetlistIndex = ref(0);
+const totalSetlistItems = ref(0);
+
 // Berechne die Slides basierend auf dem aktuellen Lied
 const prepareSlides = (song: Song | null) => {
   if (!song) {
@@ -201,9 +228,22 @@ const openProjectorWindow = () => {
   
   // Öffne ein neues Fenster mit der Projektor-Seite
   const songId = route.query.songId as string | undefined;
-  const url = songId 
-    ? `/projector?songId=${songId}` 
-    : '/projector';
+  const setlistId = route.query.setlistId as string | undefined;
+  
+  let url = '/projector';
+  const params = new URLSearchParams();
+  
+  if (songId) {
+    params.append('songId', songId);
+  }
+  
+  if (setlistId) {
+    params.append('setlistId', setlistId);
+  }
+  
+  if (params.toString()) {
+    url += `?${params.toString()}`;
+  }
   
   projectorWindow.value = window.open(url, 'projector', 'width=1024,height=768');
   
@@ -237,6 +277,28 @@ const handleFullscreen = () => {
   }
 };
 
+// Setlist-Navigation
+const handleNextSong = () => {
+  if (projectorWindow.value && !projectorWindow.value.closed) {
+    projectorWindow.value.postMessage({ type: 'nextSong' }, '*');
+  }
+};
+
+const handlePrevSong = () => {
+  if (projectorWindow.value && !projectorWindow.value.closed) {
+    projectorWindow.value.postMessage({ type: 'prevSong' }, '*');
+  }
+};
+
+const jumpToSong = (songId: string) => {
+  if (projectorWindow.value && !projectorWindow.value.closed) {
+    projectorWindow.value.postMessage({ 
+      type: 'jumpToSong',
+      songId
+    }, '*');
+  }
+};
+
 // Lade das Lied basierend auf der URL oder der Setlist
 onMounted(async () => {
   // Setze den Projektor zurück
@@ -267,8 +329,32 @@ onMounted(async () => {
   
   // Event-Listener für Nachrichten vom Projektor-Fenster
   const handleMessage = (event: MessageEvent) => {
-    if (event.data && event.data.type === 'fullscreenChange') {
-      projectionStore.setFullscreen(event.data.isFullscreen);
+    if (event.data) {
+      switch (event.data.type) {
+        case 'fullscreenChange':
+          projectionStore.setFullscreen(event.data.isFullscreen);
+          break;
+          
+        case 'projectorState':
+          // Aktualisiere den Zustand basierend auf den Informationen vom Projektor
+          if (event.data.inSetlist) {
+            inSetlist.value = true;
+            currentSetlistIndex.value = event.data.currentSetlistIndex;
+            totalSetlistItems.value = event.data.totalSetlistItems;
+          }
+          break;
+          
+        case 'setlistLoaded':
+          inSetlist.value = true;
+          currentSetlistIndex.value = 0;
+          totalSetlistItems.value = event.data.totalItems;
+          break;
+          
+        case 'setlistItemChanged':
+          currentSetlistIndex.value = event.data.currentIndex;
+          totalSetlistItems.value = event.data.totalItems;
+          break;
+      }
     }
   };
   

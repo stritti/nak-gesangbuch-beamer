@@ -83,6 +83,10 @@ const prepareSlides = (song: Song | null) => {
   }
 };
 
+// Zustand für Setlist-Navigation
+const currentSetlistIndex = ref(0);
+const setlistItems = ref<Array<{songId: string, verseIds?: string[]}>>([]);
+
 // Lade das Lied basierend auf der URL oder der Setlist
 onMounted(async () => {
   // Setze den Projektor zurück
@@ -91,6 +95,40 @@ onMounted(async () => {
   // Lade Lieder, falls noch nicht geladen
   if (songStore.songs.length === 0) {
     await songStore.loadSongs();
+  }
+
+  // Lade Setlists, falls noch nicht geladen
+  if (setlistStore.setlists.length === 0) {
+    setlistStore.loadSetlists();
+  }
+
+  // Prüfe, ob eine Setlist-ID in der URL angegeben ist
+  const setlistId = route.query.setlistId as string | undefined;
+  if (setlistId) {
+    const setlist = setlistStore.setlists.find(s => s.id === setlistId);
+    if (setlist && setlist.items.length > 0) {
+      // Speichere die Setlist-Items für die Navigation
+      setlistItems.value = setlist.items;
+      currentSetlistIndex.value = 0;
+      
+      // Lade das erste Lied aus der Setlist
+      const firstItem = setlist.items[0];
+      const song = songStore.getSongById(firstItem.songId);
+      if (song) {
+        prepareSlides(song);
+      }
+      
+      // Informiere das Steuerungsfenster über die geladene Setlist
+      if (window.opener) {
+        window.opener.postMessage({
+          type: 'setlistLoaded',
+          setlistId,
+          totalItems: setlist.items.length
+        }, '*');
+      }
+      
+      return; // Wir haben eine Setlist geladen, also nicht weiter nach einzelnen Liedern suchen
+    }
   }
 
   // Prüfe, ob ein Lied in der URL angegeben ist
@@ -103,6 +141,10 @@ onMounted(async () => {
   } else {
     // Lade die aktuelle Setlist
     if (setlistStore.currentSetlist && setlistStore.currentSetlist.items.length > 0) {
+      // Speichere die Setlist-Items für die Navigation
+      setlistItems.value = setlistStore.currentSetlist.items;
+      currentSetlistIndex.value = 0;
+      
       const firstItem = setlistStore.currentSetlist.items[0];
       const song = songStore.getSongById(firstItem.songId);
       if (song) {
@@ -111,19 +153,97 @@ onMounted(async () => {
     }
   }
   
+  // Funktionen für die Setlist-Navigation
+  const nextSong = () => {
+    if (setlistItems.value.length === 0 || currentSetlistIndex.value >= setlistItems.value.length - 1) {
+      return;
+    }
+    
+    currentSetlistIndex.value++;
+    const nextItem = setlistItems.value[currentSetlistIndex.value];
+    const song = songStore.getSongById(nextItem.songId);
+    
+    if (song) {
+      // Setze den Projektor zurück und lade das nächste Lied
+      projectionStore.reset();
+      prepareSlides(song);
+      
+      // Informiere das Steuerungsfenster über den Wechsel
+      if (window.opener) {
+        window.opener.postMessage({
+          type: 'setlistItemChanged',
+          currentIndex: currentSetlistIndex.value,
+          totalItems: setlistItems.value.length,
+          currentSongId: song.id
+        }, '*');
+      }
+    }
+  };
+  
+  const prevSong = () => {
+    if (setlistItems.value.length === 0 || currentSetlistIndex.value <= 0) {
+      return;
+    }
+    
+    currentSetlistIndex.value--;
+    const prevItem = setlistItems.value[currentSetlistIndex.value];
+    const song = songStore.getSongById(prevItem.songId);
+    
+    if (song) {
+      // Setze den Projektor zurück und lade das vorherige Lied
+      projectionStore.reset();
+      prepareSlides(song);
+      
+      // Informiere das Steuerungsfenster über den Wechsel
+      if (window.opener) {
+        window.opener.postMessage({
+          type: 'setlistItemChanged',
+          currentIndex: currentSetlistIndex.value,
+          totalItems: setlistItems.value.length,
+          currentSongId: song.id
+        }, '*');
+      }
+    }
+  };
+
   // Event-Listener für Nachrichten vom Steuerungsfenster
   const handleMessage = (event: MessageEvent) => {
     // Hier können wir weitere Nachrichten vom Steuerungsfenster verarbeiten
-    if (event.data && event.data.type === 'requestState') {
-      // Sende den aktuellen Zustand zurück
-      if (window.opener) {
-        window.opener.postMessage({
-          type: 'projectorState',
-          isFullscreen: document.fullscreenElement !== null,
-          currentIndex: projectionStore.currentIndex,
-          totalSlides: slides.value.length,
-          currentSongId: currentSong.value?.id
-        }, '*');
+    if (event.data) {
+      switch (event.data.type) {
+        case 'requestState':
+          // Sende den aktuellen Zustand zurück
+          if (window.opener) {
+            window.opener.postMessage({
+              type: 'projectorState',
+              isFullscreen: document.fullscreenElement !== null,
+              currentIndex: projectionStore.currentIndex,
+              totalSlides: slides.value.length,
+              currentSongId: currentSong.value?.id,
+              inSetlist: setlistItems.value.length > 0,
+              currentSetlistIndex: currentSetlistIndex.value,
+              totalSetlistItems: setlistItems.value.length
+            }, '*');
+          }
+          break;
+          
+        case 'nextSong':
+          nextSong();
+          break;
+          
+        case 'prevSong':
+          prevSong();
+          break;
+          
+        case 'jumpToSong':
+          if (event.data.songId) {
+            const song = songStore.getSongById(event.data.songId);
+            if (song) {
+              projectionStore.reset();
+              prepareSlides(song);
+            }
+          }
+          break;
       }
     }
   };
