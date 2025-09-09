@@ -10,6 +10,20 @@
     <div class="nak-logo-container">
       <img src="@/assets/nak-logo.svg" alt="NAK Logo" class="nak-logo" />
     </div>
+    
+    <!-- Home-Button in der linken oberen Ecke -->
+    <div class="home-button-container">
+      <button 
+        @click="goHome" 
+        class="home-button" 
+        title="Zurück zur Startseite"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+      </button>
+    </div>
     <div v-if="blackout" class="w-full h-full bg-black"></div>
     <div v-else class="flex flex-col h-full p-8">
       <!-- Liedtitel und Nummer -->
@@ -120,6 +134,7 @@ const emit = defineEmits<{
   (e: 'blackout'): void;
   (e: 'fullscreen', value: boolean): void;
   (e: 'jump-to-verse', index: number): void;
+  (e: 'home'): void;
 }>();
 
 // Refs
@@ -274,6 +289,11 @@ const jumpToVerse = (verseIndex: number) => {
   
   // Da jede Strophe genau einem Slide entspricht, ist der Slide-Index gleich dem Strophen-Index
   emit('jump-to-verse', verseIndex);
+};
+
+// Zur Startseite navigieren
+const goHome = () => {
+  emit('home');
 };
 
 const toggleFullscreen = async () => {
@@ -515,4 +535,52 @@ const afterLeave = () => {
 }
 
 /* Keine Filter für das Logo mehr nötig, da es jetzt mit eigenen Farben kommt */
+
+/* Styling für den Home-Button */
+.home-button-container {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 10;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.home-button-container:hover {
+  opacity: 1;
+}
+
+.home-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.3);
+  color: white;
+  transition: background-color 0.3s ease;
+}
+
+.home-button:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.light .home-button {
+  background-color: rgba(0, 0, 0, 0.2);
+  color: black;
+}
+
+.light .home-button:hover {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.high-contrast .home-button {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.high-contrast .home-button:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
 </style>

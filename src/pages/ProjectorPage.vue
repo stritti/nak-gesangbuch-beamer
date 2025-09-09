@@ -14,6 +14,7 @@
     @blackout="projectionStore.toggleBlackout()"
     @fullscreen="projectionStore.setFullscreen($event)"
     @jump-to-verse="projectionStore.currentIndex = $event"
+    @home="navigateHome"
   >
     <template #footer v-if="currentSong && currentSong.copyright">
       <div class="text-center">
@@ -212,6 +213,20 @@ const handleStorageChange = (event: StorageEvent) => {
 
 // Referenz für das Interval
 let checkInterval: number | null = null;
+
+// Zur Startseite navigieren
+const navigateHome = () => {
+  // Fenster schließen oder zur Startseite navigieren
+  if (window.opener) {
+    // Informiere das Steuerungsfenster, dass wir zur Startseite navigieren
+    window.opener.postMessage({
+      type: 'navigatingHome'
+    }, '*');
+  }
+  
+  // Zur Startseite navigieren
+  window.location.href = '/';
+};
 
 // Lade das Lied basierend auf der URL oder der Setlist
 onMounted(async () => {
