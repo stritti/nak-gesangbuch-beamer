@@ -81,7 +81,7 @@ const prepareSlides = (song: Song | null) => {
       type: 'slidesUpdated',
       totalSlides: allSlides.length,
       currentSongId: song.id
-    }, '*');
+    }, window.location.origin);
   }
 };
 
@@ -111,7 +111,7 @@ const nextSong = () => {
         currentIndex: currentSetlistIndex.value,
         totalItems: setlistItems.value.length,
         currentSongId: song.id
-      }, '*');
+      }, window.location.origin);
     }
   }
 };
@@ -137,14 +137,16 @@ const prevSong = () => {
         currentIndex: currentSetlistIndex.value,
         totalItems: setlistItems.value.length,
         currentSongId: song.id
-      }, '*');
+      }, window.location.origin);
     }
   }
 };
 
 // Event-Listener für Nachrichten vom Steuerungsfenster
 const handleMessage = (event: MessageEvent) => {
-  // Hier können wir weitere Nachrichten vom Steuerungsfenster verarbeiten
+  // Nur Nachrichten vom gleichen Origin und vom Opener akzeptieren
+  if (event.origin !== window.location.origin) return;
+  if (event.source !== window.opener) return;
   if (event.data) {
     switch (event.data.type) {
       case 'requestState':
@@ -159,10 +161,36 @@ const handleMessage = (event: MessageEvent) => {
             inSetlist: setlistItems.value.length > 0,
             currentSetlistIndex: currentSetlistIndex.value,
             totalSetlistItems: setlistItems.value.length
-          }, '*');
+          }, window.location.origin);
         }
         break;
       
+      case 'nextSlide':
+        if (projectionStore.currentIndex < slides.value.length - 1) {
+          projectionStore.next();
+        }
+        break;
+      
+      case 'prevSlide':
+        if (projectionStore.currentIndex > 0) {
+          projectionStore.prev();
+        }
+        break;
+      
+      case 'blackout':
+        projectionStore.toggleBlackout();
+        break;
+
+      case 'updateSettings':
+        if (event.data.settings) {
+          const s = event.data.settings;
+          if (s.fontSize !== undefined) projectionStore.setFontSize(s.fontSize);
+          if (s.lineHeight !== undefined) projectionStore.setLineHeight(s.lineHeight);
+          if (s.theme !== undefined) projectionStore.setTheme(s.theme);
+          if (s.maxLinesPerSlide !== undefined) projectionStore.setMaxLinesPerSlide(s.maxLinesPerSlide);
+        }
+        break;
+
       case 'nextSong':
         nextSong();
         break;
@@ -217,12 +245,12 @@ let checkInterval: number | null = null;
 // Prüfe, ob die Seite in einem eigenen Fenster geöffnet ist
 const checkIfInOwnWindow = () => {
   // Wenn wir nicht in einem eigenen Fenster sind, öffnen wir uns selbst in einem neuen Fenster
-  if (window.opener === null && window.parent === window && !window.name.includes('projector_window')) {
+  if (window.opener === null && window.parent === window && !window.name.includes('projector')) {
     // Speichere die aktuelle URL mit allen Parametern
     const url = window.location.href;
     
     // Prüfe, ob bereits ein Projektorfenster existiert
-    const existingWindow = window.open('', 'projector_window');
+    const existingWindow = window.open('', 'projector');
     
     if (existingWindow && !existingWindow.closed) {
       // Wenn ein Fenster existiert, navigiere es zu unserer URL
@@ -231,7 +259,7 @@ const checkIfInOwnWindow = () => {
     } else {
       // Sonst öffne ein neues Fenster
       const windowFeatures = localStorage.getItem('projectorWindowFeatures') || 'width=1024,height=768';
-      const newWindow = window.open(url, 'projector_window', windowFeatures);
+      const newWindow = window.open(url, 'projector', windowFeatures);
       
       if (newWindow) {
         newWindow.focus();
@@ -250,7 +278,7 @@ const checkIfInOwnWindow = () => {
   }
   
   // Registriere dieses Fenster als das aktive Projektorfenster
-  window.name = 'projector_window';
+  window.name = 'projector';
   
   return true;
 };
@@ -262,7 +290,7 @@ const navigateHome = () => {
     // Informiere das Steuerungsfenster, dass wir zur Startseite navigieren
     window.opener.postMessage({
       type: 'navigatingHome'
-    }, '*');
+    }, window.location.origin);
   }
   
   // Zur Startseite navigieren
@@ -311,7 +339,7 @@ onMounted(async () => {
           type: 'setlistLoaded',
           setlistId,
           totalItems: setlist.items.length
-        }, '*');
+        }, window.location.origin);
       }
       
       return; // Wir haben eine Setlist geladen, also nicht weiter nach einzelnen Liedern suchen
@@ -356,7 +384,7 @@ onMounted(async () => {
       inSetlist: setlistItems.value.length > 0,
       currentSetlistIndex: currentSetlistIndex.value,
       totalSetlistItems: setlistItems.value.length
-    }, '*');
+    }, window.location.origin);
   }
   
   // Registriere dieses Fenster als das aktive Projektorfenster
@@ -399,5 +427,19 @@ watch(() => projectionStore.currentIndex, (newIndex) => {
 // Reagiere auf Änderungen der Projektor-Einstellungen
 watch(() => projectionStore.maxLinesPerSlide, () => {
   prepareSlides(currentSong.value);
+});
+
+// Benachrichtige das Steuerungsfenster, wenn sich der Slide-Index ändert
+watch(() => projectionStore.currentIndex, (newIndex) => {
+  if (!window.opener) return;
+  try {
+    window.opener.postMessage({
+      type: 'slideChanged',
+      currentIndex: newIndex,
+      totalSlides: slides.value.length
+    }, window.location.origin);
+  } catch {
+    // Opener ist nicht zugreifbar oder nicht same-origin; keine Nachricht senden
+  }
 });
 </script>

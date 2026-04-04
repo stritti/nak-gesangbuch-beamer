@@ -92,7 +92,7 @@ export function sendMessageToProjector(window: Window | null, message: any): boo
   // Verwende das übergebene Fenster, wenn es gültig ist
   if (window && !window.closed) {
     try {
-      window.postMessage(message, '*');
+      window.postMessage(message, self.location.origin);
       return true;
     } catch (error) {
       console.error('Fehler beim Senden der Nachricht an das Projektorfenster:', error);
@@ -103,7 +103,7 @@ export function sendMessageToProjector(window: Window | null, message: any): boo
   // Verwende die globale Referenz, wenn sie gültig ist
   if (globalProjectorWindow && !globalProjectorWindow.closed) {
     try {
-      globalProjectorWindow.postMessage(message, '*');
+      globalProjectorWindow.postMessage(message, self.location.origin);
       return true;
     } catch (error) {
       console.error('Fehler beim Senden der Nachricht an das globale Projektorfenster:', error);
@@ -116,7 +116,7 @@ export function sendMessageToProjector(window: Window | null, message: any): boo
   const projectorWindow = getProjectorWindow();
   if (projectorWindow && !projectorWindow.closed) {
     try {
-      projectorWindow.postMessage(message, '*');
+      projectorWindow.postMessage(message, self.location.origin);
       return true;
     } catch (error) {
       console.error('Fehler beim Senden der Nachricht an das gefundene Projektorfenster:', error);

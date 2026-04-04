@@ -1,5 +1,5 @@
 import { ref, onMounted, onUnmounted } from 'vue';
-import { projectSong, projectSetlist, isProjectorOpen, getProjectorWindow } from '@/utils/projection';
+import { projectSong, projectSetlist, isProjectorOpen, getProjectorWindow, sendMessageToProjector } from '@/utils/projection';
 
 /**
  * Composable für die Projektion von Liedern und Setlists
