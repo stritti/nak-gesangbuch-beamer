@@ -191,7 +191,7 @@ import ControlPanel from '@/components/ControlPanel.vue';
 import HotkeyLegend from '@/components/HotkeyLegend.vue';
 import { Song, Verse } from '@/features/songs/song.types';
 import { splitVerseIntoSlides } from '@/utils/slideUtils';
-import { openProjectorWindow, sendMessageToProjector, isProjectorOpen, getProjectorWindow } from '@/utils/projection';
+import { openProjectorWindow, isProjectorOpen, getProjectorWindow } from '@/utils/projection';
 import { useProjection } from '@/composables/useProjection';
 
 const route = useRoute();
@@ -310,7 +310,7 @@ const sendToProjector = (message: any): boolean => {
   const win = projectorWindow.value;
   if (win && !win.closed) {
     try {
-      win.postMessage(message, '*');
+      win.postMessage(message, window.location.origin);
       return true;
     } catch (error) {
       console.error('Fehler beim Senden der Nachricht an den Projektor:', error);
@@ -417,6 +417,8 @@ const setProjectorWindow = (type: 'primary' | 'secondary' | 'fullscreen' | 'cust
 
 // Event-Listener für Nachrichten vom Projektor-Fenster
 const handleMessage = (event: MessageEvent) => {
+  // Nur Nachrichten vom gleichen Origin akzeptieren
+  if (event.origin !== window.location.origin) return;
   if (event.data) {
     switch (event.data.type) {
       case 'projectorReady':

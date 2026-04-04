@@ -81,7 +81,7 @@ const prepareSlides = (song: Song | null) => {
       type: 'slidesUpdated',
       totalSlides: allSlides.length,
       currentSongId: song.id
-    }, '*');
+    }, window.location.origin);
   }
 };
 
@@ -111,7 +111,7 @@ const nextSong = () => {
         currentIndex: currentSetlistIndex.value,
         totalItems: setlistItems.value.length,
         currentSongId: song.id
-      }, '*');
+      }, window.location.origin);
     }
   }
 };
@@ -137,14 +137,16 @@ const prevSong = () => {
         currentIndex: currentSetlistIndex.value,
         totalItems: setlistItems.value.length,
         currentSongId: song.id
-      }, '*');
+      }, window.location.origin);
     }
   }
 };
 
 // Event-Listener für Nachrichten vom Steuerungsfenster
 const handleMessage = (event: MessageEvent) => {
-  // Hier können wir weitere Nachrichten vom Steuerungsfenster verarbeiten
+  // Nur Nachrichten vom gleichen Origin und vom Opener akzeptieren
+  if (event.origin !== window.location.origin) return;
+  if (event.source !== window.opener) return;
   if (event.data) {
     switch (event.data.type) {
       case 'requestState':
@@ -159,7 +161,7 @@ const handleMessage = (event: MessageEvent) => {
             inSetlist: setlistItems.value.length > 0,
             currentSetlistIndex: currentSetlistIndex.value,
             totalSetlistItems: setlistItems.value.length
-          }, '*');
+          }, window.location.origin);
         }
         break;
       
@@ -288,7 +290,7 @@ const navigateHome = () => {
     // Informiere das Steuerungsfenster, dass wir zur Startseite navigieren
     window.opener.postMessage({
       type: 'navigatingHome'
-    }, '*');
+    }, window.location.origin);
   }
   
   // Zur Startseite navigieren
@@ -337,7 +339,7 @@ onMounted(async () => {
           type: 'setlistLoaded',
           setlistId,
           totalItems: setlist.items.length
-        }, '*');
+        }, window.location.origin);
       }
       
       return; // Wir haben eine Setlist geladen, also nicht weiter nach einzelnen Liedern suchen
@@ -382,7 +384,7 @@ onMounted(async () => {
       inSetlist: setlistItems.value.length > 0,
       currentSetlistIndex: currentSetlistIndex.value,
       totalSetlistItems: setlistItems.value.length
-    }, '*');
+    }, window.location.origin);
   }
   
   // Registriere dieses Fenster als das aktive Projektorfenster
@@ -429,12 +431,15 @@ watch(() => projectionStore.maxLinesPerSlide, () => {
 
 // Benachrichtige das Steuerungsfenster, wenn sich der Slide-Index ändert
 watch(() => projectionStore.currentIndex, (newIndex) => {
-  if (window.opener) {
+  if (!window.opener) return;
+  try {
     window.opener.postMessage({
       type: 'slideChanged',
       currentIndex: newIndex,
       totalSlides: slides.value.length
-    }, '*');
+    }, window.location.origin);
+  } catch {
+    // Opener ist nicht zugreifbar oder nicht same-origin; keine Nachricht senden
   }
 });
 </script>

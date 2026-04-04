@@ -314,18 +314,33 @@ const toggleFullscreen = async () => {
 
 // Event-Listener für Nachrichten vom Steuerungsfenster
 const handleMessage = (event: MessageEvent) => {
+  // Nur Nachrichten vom gleichen Origin akzeptieren
+  if (event.origin !== window.location.origin) return;
   if (event.data) {
     switch (event.data.type) {
       case 'toggleFullscreen':
-        toggleFullscreen().then(() => {
-          // Sende Bestätigung zurück, nachdem der Vollbildmodus umgeschaltet wurde
-          if (window.opener) {
-            window.opener.postMessage({
-              type: 'fullscreenChange',
-              isFullscreen: document.fullscreenElement !== null
-            }, '*');
-          }
-        });
+        toggleFullscreen()
+          .then(() => {
+            // Sende Bestätigung zurück, nachdem der Vollbildmodus umgeschaltet wurde
+            if (window.opener) {
+              window.opener.postMessage({
+                type: 'fullscreenChange',
+                isFullscreen: document.fullscreenElement !== null
+              }, window.location.origin);
+            }
+          })
+          .catch((error) => {
+            // Sende auch im Fehlerfall den tatsächlichen Status zurück,
+            // damit das Steuerungsfenster konsistent bleibt
+            if (window.opener) {
+              window.opener.postMessage({
+                type: 'fullscreenChange',
+                isFullscreen: document.fullscreenElement !== null,
+                error: true,
+                message: error instanceof Error ? error.message : 'Fullscreen-Wechsel fehlgeschlagen'
+              }, window.location.origin);
+            }
+          });
         break;
       
       case 'updateSlides':
