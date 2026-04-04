@@ -163,6 +163,32 @@ const handleMessage = (event: MessageEvent) => {
         }
         break;
       
+      case 'nextSlide':
+        if (projectionStore.currentIndex < slides.value.length - 1) {
+          projectionStore.next();
+        }
+        break;
+      
+      case 'prevSlide':
+        if (projectionStore.currentIndex > 0) {
+          projectionStore.prev();
+        }
+        break;
+      
+      case 'blackout':
+        projectionStore.toggleBlackout();
+        break;
+
+      case 'updateSettings':
+        if (event.data.settings) {
+          const s = event.data.settings;
+          if (s.fontSize !== undefined) projectionStore.setFontSize(s.fontSize);
+          if (s.lineHeight !== undefined) projectionStore.setLineHeight(s.lineHeight);
+          if (s.theme !== undefined) projectionStore.setTheme(s.theme);
+          if (s.maxLinesPerSlide !== undefined) projectionStore.setMaxLinesPerSlide(s.maxLinesPerSlide);
+        }
+        break;
+
       case 'nextSong':
         nextSong();
         break;
@@ -217,12 +243,12 @@ let checkInterval: number | null = null;
 // Prüfe, ob die Seite in einem eigenen Fenster geöffnet ist
 const checkIfInOwnWindow = () => {
   // Wenn wir nicht in einem eigenen Fenster sind, öffnen wir uns selbst in einem neuen Fenster
-  if (window.opener === null && window.parent === window && !window.name.includes('projector_window')) {
+  if (window.opener === null && window.parent === window && !window.name.includes('projector')) {
     // Speichere die aktuelle URL mit allen Parametern
     const url = window.location.href;
     
     // Prüfe, ob bereits ein Projektorfenster existiert
-    const existingWindow = window.open('', 'projector_window');
+    const existingWindow = window.open('', 'projector');
     
     if (existingWindow && !existingWindow.closed) {
       // Wenn ein Fenster existiert, navigiere es zu unserer URL
@@ -231,7 +257,7 @@ const checkIfInOwnWindow = () => {
     } else {
       // Sonst öffne ein neues Fenster
       const windowFeatures = localStorage.getItem('projectorWindowFeatures') || 'width=1024,height=768';
-      const newWindow = window.open(url, 'projector_window', windowFeatures);
+      const newWindow = window.open(url, 'projector', windowFeatures);
       
       if (newWindow) {
         newWindow.focus();
@@ -250,7 +276,7 @@ const checkIfInOwnWindow = () => {
   }
   
   // Registriere dieses Fenster als das aktive Projektorfenster
-  window.name = 'projector_window';
+  window.name = 'projector';
   
   return true;
 };
@@ -399,5 +425,16 @@ watch(() => projectionStore.currentIndex, (newIndex) => {
 // Reagiere auf Änderungen der Projektor-Einstellungen
 watch(() => projectionStore.maxLinesPerSlide, () => {
   prepareSlides(currentSong.value);
+});
+
+// Benachrichtige das Steuerungsfenster, wenn sich der Slide-Index ändert
+watch(() => projectionStore.currentIndex, (newIndex) => {
+  if (window.opener) {
+    window.opener.postMessage({
+      type: 'slideChanged',
+      currentIndex: newIndex,
+      totalSlides: slides.value.length
+    }, '*');
+  }
 });
 </script>

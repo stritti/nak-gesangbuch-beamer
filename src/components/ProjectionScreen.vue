@@ -317,20 +317,20 @@ const handleMessage = (event: MessageEvent) => {
   if (event.data) {
     switch (event.data.type) {
       case 'toggleFullscreen':
-        toggleFullscreen();
-        // Sende Bestätigung zurück
-        if (window.opener) {
-          window.opener.postMessage({
-            type: 'fullscreenChange',
-            isFullscreen: document.fullscreenElement !== null
-          }, '*');
-        }
+        toggleFullscreen().then(() => {
+          // Sende Bestätigung zurück, nachdem der Vollbildmodus umgeschaltet wurde
+          if (window.opener) {
+            window.opener.postMessage({
+              type: 'fullscreenChange',
+              isFullscreen: document.fullscreenElement !== null
+            }, '*');
+          }
+        });
         break;
       
       case 'updateSlides':
         // Hier könnten wir Slides aktualisieren, wenn sie vom Steuerungsfenster gesendet werden
         if (event.data.slides) {
-          // Hier müssten wir die Slides aktualisieren, aber das hängt von der Implementierung ab
           console.log('Slides aktualisiert:', event.data.slides);
         }
         break;

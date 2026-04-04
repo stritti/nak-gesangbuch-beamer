@@ -290,11 +290,11 @@ const openProjector = () => {
       projectorWindow.value = existingWindow;
     } else {
       // Falls wir keine Referenz haben, aber isOpen true ist, öffne ein neues Fenster
-      projectorWindow.value = window.open(url, 'projector_window', windowFeatures);
+      projectorWindow.value = window.open(url, 'projector', windowFeatures);
     }
   } else {
     // Öffne ein neues Fenster
-    projectorWindow.value = window.open(url, 'projector_window', windowFeatures);
+    projectorWindow.value = window.open(url, 'projector', windowFeatures);
   }
   
   // Wenn das Fenster neu geöffnet wurde, zeige eine Meldung an
@@ -305,50 +305,57 @@ const openProjector = () => {
   }
 };
 
+// Hilfsfunktion: Nachricht an den Projektor senden
+const sendToProjector = (message: any): boolean => {
+  const win = projectorWindow.value;
+  if (win && !win.closed) {
+    try {
+      win.postMessage(message, '*');
+      return true;
+    } catch (error) {
+      console.error('Fehler beim Senden der Nachricht an den Projektor:', error);
+      projectorWindow.value = null;
+    }
+  }
+  return false;
+};
+
 const handleNext = () => {
   if (projectionStore.currentIndex < slides.value.length - 1) {
     projectionStore.next();
   }
+  sendToProjector({ type: 'nextSlide' });
 };
 
 const handlePrev = () => {
   if (projectionStore.currentIndex > 0) {
     projectionStore.prev();
   }
+  sendToProjector({ type: 'prevSlide' });
 };
 
 const handleBlackout = () => {
   projectionStore.toggleBlackout();
+  sendToProjector({ type: 'blackout' });
 };
 
 const handleFullscreen = () => {
   // Sende eine Nachricht an das Projektorfenster, um den Vollbildmodus zu aktivieren
-  if (projectorWindow.value && !projectorWindow.value.closed) {
-    projectorWindow.value.postMessage({ type: 'toggleFullscreen' }, '*');
-    // Wir aktualisieren den Store-Zustand erst, wenn wir eine Bestätigung vom Projektor erhalten
-  }
+  sendToProjector({ type: 'toggleFullscreen' });
+  // Wir aktualisieren den Store-Zustand erst, wenn wir eine Bestätigung vom Projektor erhalten
 };
 
 // Setlist-Navigation
 const handleNextSong = () => {
-  if (projectorWindow.value && !projectorWindow.value.closed) {
-    projectorWindow.value.postMessage({ type: 'nextSong' }, '*');
-  }
+  sendToProjector({ type: 'nextSong' });
 };
 
 const handlePrevSong = () => {
-  if (projectorWindow.value && !projectorWindow.value.closed) {
-    projectorWindow.value.postMessage({ type: 'prevSong' }, '*');
-  }
+  sendToProjector({ type: 'prevSong' });
 };
 
 const jumpToSong = (songId: string) => {
-  if (projectorWindow.value && !projectorWindow.value.closed) {
-    projectorWindow.value.postMessage({ 
-      type: 'jumpToSong',
-      songId
-    }, '*');
-  }
+  sendToProjector({ type: 'jumpToSong', songId });
 };
 
 // Projektor-Fenster-Einstellungen
@@ -396,7 +403,7 @@ const setProjectorWindow = (type: 'primary' | 'secondary' | 'fullscreen' | 'cust
       existingWindow.close();
       
       // Öffne ein neues Fenster mit den aktualisierten Einstellungen
-      projectorWindow.value = window.open(url, 'projector_window', windowFeatures);
+      projectorWindow.value = window.open(url, 'projector', windowFeatures);
       
       if (projectorWindow.value) {
         projectorWindow.value.focus();
@@ -412,6 +419,28 @@ const setProjectorWindow = (type: 'primary' | 'secondary' | 'fullscreen' | 'cust
 const handleMessage = (event: MessageEvent) => {
   if (event.data) {
     switch (event.data.type) {
+      case 'projectorReady':
+        // Projektor-Fensterreferenz aus dem Absender aktualisieren
+        if (event.source && event.source !== window) {
+          projectorWindow.value = event.source as Window;
+        }
+        if (event.data.inSetlist) {
+          inSetlist.value = true;
+          currentSetlistIndex.value = event.data.currentSetlistIndex ?? 0;
+          totalSetlistItems.value = event.data.totalSetlistItems ?? 0;
+        }
+        if (event.data.currentIndex !== undefined) {
+          projectionStore.currentIndex = event.data.currentIndex;
+        }
+        break;
+
+      case 'slideChanged':
+        // Projektor hat den Slide geändert (z.B. per Tastatur) – Vorschau synchronisieren
+        if (event.data.currentIndex !== undefined) {
+          projectionStore.currentIndex = event.data.currentIndex;
+        }
+        break;
+
       case 'fullscreenChange':
         projectionStore.setFullscreen(event.data.isFullscreen);
         break;
@@ -422,6 +451,9 @@ const handleMessage = (event: MessageEvent) => {
           inSetlist.value = true;
           currentSetlistIndex.value = event.data.currentSetlistIndex;
           totalSetlistItems.value = event.data.totalSetlistItems;
+        }
+        if (event.data.currentIndex !== undefined) {
+          projectionStore.currentIndex = event.data.currentIndex;
         }
         break;
         
@@ -487,8 +519,22 @@ watch(() => projectionStore.currentIndex, (newIndex) => {
 });
 
 // Reagiere auf Änderungen der Projektor-Einstellungen
-watch(() => projectionStore.maxLinesPerSlide, () => {
+watch(() => projectionStore.maxLinesPerSlide, (val) => {
   prepareSlides(currentSong.value);
+  sendToProjector({ type: 'updateSettings', settings: { maxLinesPerSlide: val } });
+});
+
+// Einstellungsänderungen an den Projektor weitergeben
+watch(() => projectionStore.fontSize, (val) => {
+  sendToProjector({ type: 'updateSettings', settings: { fontSize: val } });
+});
+
+watch(() => projectionStore.lineHeight, (val) => {
+  sendToProjector({ type: 'updateSettings', settings: { lineHeight: val } });
+});
+
+watch(() => projectionStore.theme, (val) => {
+  sendToProjector({ type: 'updateSettings', settings: { theme: val } });
 });
 </script>
 
