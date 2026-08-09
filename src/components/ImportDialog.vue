@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { useSongStore } from '@/features/songs/song.store';
 import { pickFiles } from '@/utils/file';
 
@@ -48,7 +48,7 @@ async function handleImport() {
         success: true,
         songCount: result.valid.length,
         bookCount: books.length,
-        version: result.version || 'Unbekannt'
+        version: 'version' in result ? result.version : 'Unbekannt'
       };
     } finally {
       clearInterval(progressInterval);

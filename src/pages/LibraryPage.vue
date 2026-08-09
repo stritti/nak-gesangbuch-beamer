@@ -82,7 +82,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
+import type { Song } from '@/features/songs/song.types';
 import { useSongStore } from '@/features/songs/song.store';
 import { useSetlistStore } from '@/features/setlist/setlist.store';
 import { useRouter } from 'vue-router';
@@ -98,8 +99,9 @@ const router = useRouter();
 
 const searchQuery = ref('');
 const selectedBookId = ref<string | null>(null);
-const filteredSongs = ref([] as any[]);
-const importResults = ref({ valid: [], invalid: [] as { file: string; errors: string[] }[] });
+type ImportResults = { valid: Song[]; invalid: { file: string; errors: string[] }[] } | { valid: Song[]; invalid: { file: string; errors: string[] }[]; nakImport: boolean; version: string };
+const filteredSongs = ref<Song[]>([]);
+const importResults = ref<ImportResults>({ valid: [], invalid: [] });
 
 // Lade Lieder beim Mounten der Komponente
 onMounted(async () => {

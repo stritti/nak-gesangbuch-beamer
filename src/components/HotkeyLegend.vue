@@ -12,30 +12,22 @@
   </div>
 </template>
 
-<script lang="ts">
-// Define the interface and default hotkeys in a normal script block
+<script setup lang="ts">
 export interface Hotkey {
   key: string;
   description: string;
 }
 
-export const DEFAULT_HOTKEYS: Hotkey[] = [
-  { key: '←', description: 'Vorheriger Slide' },
-  { key: '→', description: 'Nächster Slide' },
-  { key: 'B', description: 'Blackout ein/aus' },
-  { key: 'F', description: 'Vollbild ein/aus' },
-  { key: '.', description: 'Nächster Slide (alternativ)' },
-  { key: ',', description: 'Vorheriger Slide (alternativ)' }
-];
-</script>
-
-<script setup lang="ts">
-import { Hotkey, DEFAULT_HOTKEYS } from './HotkeyLegend.vue';
-
-// Now we can use the exported constants in defineProps
 const props = withDefaults(defineProps<{
   hotkeys?: Hotkey[];
 }>(), {
-  hotkeys: () => DEFAULT_HOTKEYS
+  hotkeys: () => [
+    { key: '←', description: 'Vorheriger Slide' },
+    { key: '→', description: 'Nächster Slide' },
+    { key: 'B', description: 'Blackout ein/aus' },
+    { key: 'F', description: 'Vollbild ein/aus' },
+    { key: '.', description: 'Nächster Slide (alternativ)' },
+    { key: ',', description: 'Vorheriger Slide (alternativ)' }
+  ]
 });
 </script>

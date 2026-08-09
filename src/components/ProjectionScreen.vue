@@ -183,11 +183,6 @@ const currentSlide = computed(() => {
   return props.slides[index];
 });
 
-// Die Gesamtzahl der Slides ist jetzt gleich der Anzahl der Strophen
-const totalSlides = computed(() => {
-  return props.slides.length;
-});
-
 // Methode zur Anpassung der Schriftgröße basierend auf dem Inhalt und der Bildschirmgröße
 const adjustFontSize = async () => {
   if (!projectionRef.value || !contentRef.value || !currentSlide.value) return;

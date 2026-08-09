@@ -39,7 +39,7 @@ export function openProjectorWindow(options: {
   if (globalProjectorWindow && !globalProjectorWindow.closed) {
     try {
       // Versuche auf eine Eigenschaft des Fensters zuzugreifen, um zu prüfen, ob es wirklich existiert
-      const _ = globalProjectorWindow.location.href;
+      void globalProjectorWindow.location.href;
       
       // Wenn das Fenster bereits existiert, aktualisiere die URL
       globalProjectorWindow.location.href = url;
@@ -56,7 +56,7 @@ export function openProjectorWindow(options: {
     const existingWindow = window.open('', 'projector');
     if (existingWindow && !existingWindow.closed) {
       // Versuche auf eine Eigenschaft des Fensters zuzugreifen
-      const _ = existingWindow.location.href;
+      void existingWindow.location.href;
       
       // Wenn das Fenster existiert, aktualisiere die URL
       existingWindow.location.href = url;
@@ -88,7 +88,7 @@ export function openProjectorWindow(options: {
  * @param message Die zu sendende Nachricht
  * @returns true, wenn die Nachricht gesendet wurde, sonst false
  */
-export function sendMessageToProjector(window: Window | null, message: any): boolean {
+export function sendMessageToProjector(window: Window | null, message: unknown): boolean {
   // Verwende das übergebene Fenster, wenn es gültig ist
   if (window && !window.closed) {
     try {
@@ -137,7 +137,7 @@ export function isProjectorOpen(): boolean {
   if (globalProjectorWindow && !globalProjectorWindow.closed) {
     try {
       // Versuche auf eine Eigenschaft des Fensters zuzugreifen
-      const _ = globalProjectorWindow.location.href;
+      void globalProjectorWindow.location.href;
       return true;
     } catch (error) {
       // Wenn eine Ausnahme auftritt, ist das Fenster nicht mehr zugänglich
@@ -152,7 +152,7 @@ export function isProjectorOpen(): boolean {
     const projectorWindow = window.open('', 'projector');
     if (projectorWindow && !projectorWindow.closed) {
       // Versuche auf eine Eigenschaft des Fensters zuzugreifen
-      const _ = projectorWindow.location.href;
+      void projectorWindow.location.href;
       
       // Aktualisiere die globale Referenz
       globalProjectorWindow = projectorWindow;
@@ -177,7 +177,7 @@ export function getProjectorWindow(): Window | null {
   if (globalProjectorWindow && !globalProjectorWindow.closed) {
     try {
       // Versuche auf eine Eigenschaft des Fensters zuzugreifen
-      const _ = globalProjectorWindow.location.href;
+      void globalProjectorWindow.location.href;
       globalProjectorWindow.focus();
       return globalProjectorWindow;
     } catch (error) {
@@ -191,7 +191,7 @@ export function getProjectorWindow(): Window | null {
     const existingWindow = window.open('', 'projector');
     if (existingWindow && !existingWindow.closed) {
       // Versuche auf eine Eigenschaft des Fensters zuzugreifen
-      const _ = existingWindow.location.href;
+      void existingWindow.location.href;
       
       // Aktualisiere die globale Referenz
       globalProjectorWindow = existingWindow;

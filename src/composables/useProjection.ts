@@ -82,7 +82,7 @@ export function useProjection() {
   /**
    * Sendet eine Nachricht an das Projektorfenster
    */
-  const sendMessageToProjectorWindow = (message: any) => {
+  const sendMessageToProjectorWindow = (message: unknown) => {
     return sendMessageToProjector(projectorWindow.value, message);
   };
   

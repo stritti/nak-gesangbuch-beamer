@@ -1,4 +1,4 @@
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
+import { openDB, DBSchema, IDBPDatabase, StoreNames, StoreValue } from 'idb';
 
 interface AppDB extends DBSchema {
   songs: {
@@ -47,21 +47,21 @@ async function getDb(): Promise<IDBPDatabase<AppDB>> {
 /**
  * Speichert ein Objekt in einem Store
  */
-export async function set<T>(storeName: keyof AppDB, item: T): Promise<void> {
+export async function set<T>(storeName: StoreNames<AppDB>, item: T): Promise<void> {
   const db = await getDb();
-  await db.put(storeName, item);
+  await db.put(storeName, item as StoreValue<AppDB, typeof storeName>);
 }
 
 /**
  * Speichert mehrere Objekte in einem Store
  */
-export async function setMany<T>(storeName: keyof AppDB, items: T[]): Promise<void> {
+export async function setMany<T>(storeName: StoreNames<AppDB>, items: T[]): Promise<void> {
   const db = await getDb();
   const tx = db.transaction(storeName, 'readwrite');
   const store = tx.objectStore(storeName);
   
   for (const item of items) {
-    await store.put(item);
+    await store.put(item as StoreValue<AppDB, typeof storeName>);
   }
   
   await tx.done;
@@ -70,23 +70,23 @@ export async function setMany<T>(storeName: keyof AppDB, items: T[]): Promise<vo
 /**
  * Lädt ein Objekt aus einem Store anhand seines Schlüssels
  */
-export async function get<T>(storeName: keyof AppDB, key: string): Promise<T | undefined> {
+export async function get<T>(storeName: StoreNames<AppDB>, key: string): Promise<T | undefined> {
   const db = await getDb();
-  return db.get(storeName, key);
+  return db.get(storeName, key) as Promise<T | undefined>;
 }
 
 /**
  * Lädt alle Objekte aus einem Store
  */
-export async function getAll<T>(storeName: keyof AppDB): Promise<T[]> {
+export async function getAll<T>(storeName: StoreNames<AppDB>): Promise<T[]> {
   const db = await getDb();
-  return db.getAll(storeName);
+  return db.getAll(storeName) as Promise<T[]>;
 }
 
 /**
  * Löscht ein Objekt aus einem Store anhand seines Schlüssels
  */
-export async function remove(storeName: keyof AppDB, key: string): Promise<void> {
+export async function remove(storeName: StoreNames<AppDB>, key: string): Promise<void> {
   const db = await getDb();
   await db.delete(storeName, key);
 }
@@ -94,7 +94,7 @@ export async function remove(storeName: keyof AppDB, key: string): Promise<void>
 /**
  * Löscht alle Objekte aus einem Store
  */
-export async function clear(storeName: keyof AppDB): Promise<void> {
+export async function clear(storeName: StoreNames<AppDB>): Promise<void> {
   const db = await getDb();
   await db.clear(storeName);
 }

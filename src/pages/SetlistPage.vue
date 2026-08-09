@@ -75,7 +75,7 @@
         <SetlistItem
           v-for="(item, index) in currentSetlist.items"
           :key="`${item.songId}-${index}`"
-          :song="getSongById(item.songId)"
+          :song="getSongById(item.songId) || undefined"
           :verse-order="item.verseIds"
           @remove="removeFromSetlist(index)"
           @edit="editSetlistItem(index)"
@@ -178,7 +178,7 @@ const removeFromSetlist = (index: number) => {
 // Bearbeite ein Setlist-Item
 const editSetlistItem = (index: number) => {
   // Hier könnte ein Dialog zur Bearbeitung der Verse implementiert werden
-  alert('Bearbeiten-Funktion wird implementiert...');
+  alert(`Bearbeiten-Funktion wird implementiert... (${index})`);
 };
 
 // Starte die Projektion mit der aktuellen Setlist

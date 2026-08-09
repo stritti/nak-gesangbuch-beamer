@@ -111,7 +111,7 @@ export class SongRepository {
         // Versuche Schema-Validierung
         const isValid = validateSong(song);
         if (isValid) {
-          result.valid.push(song as Song);
+          result.valid.push(song as unknown as Song);
         } else {
           const errors = validateSong.errors?.map(err => 
             `${err.instancePath} ${err.message}`
@@ -127,7 +127,7 @@ export class SongRepository {
         console.error('Fehler bei der Validierung:', error);
         if (this.isBasicSongValid(song)) {
           // Wenn grundlegende Validierung erfolgreich, akzeptiere das Lied trotzdem
-          result.valid.push(song as Song);
+          result.valid.push(song as unknown as Song);
         } else {
           result.invalid.push({
             file: filename,
@@ -144,7 +144,7 @@ export class SongRepository {
    * Prüft, ob ein Lied die grundlegenden Anforderungen erfüllt
    */
   private isBasicSongValid(song: unknown): boolean {
-    return (
+    return Boolean(
       song && 
       typeof song === 'object' &&
       'id' in song &&

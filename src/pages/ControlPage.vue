@@ -189,16 +189,13 @@ import { useSongStore } from '@/features/songs/song.store';
 import { useSetlistStore } from '@/features/setlist/setlist.store';
 import ControlPanel from '@/components/ControlPanel.vue';
 import HotkeyLegend from '@/components/HotkeyLegend.vue';
-import { Song, Verse } from '@/features/songs/song.types';
-import { splitVerseIntoSlides } from '@/utils/slideUtils';
-import { openProjectorWindow, isProjectorOpen, getProjectorWindow } from '@/utils/projection';
-import { useProjection } from '@/composables/useProjection';
+import { Song } from '@/features/songs/song.types';
+import { isProjectorOpen, getProjectorWindow } from '@/utils/projection';
 
 const route = useRoute();
 const projectionStore = useProjectionStore();
 const songStore = useSongStore();
 const setlistStore = useSetlistStore();
-const { projectorWindow: projectionWindow, projectSongToWindow, projectSetlistToWindow } = useProjection();
 
 // Zustand
 const slides = ref<string[][]>([]);
@@ -219,21 +216,9 @@ const prepareSlides = (song: Song | null) => {
   }
 
   currentSong.value = song;
-  const maxLinesPerSlide = projectionStore.maxLinesPerSlide;
   const allSlides: string[][] = [];
 
-  // Bestimme die Reihenfolge der Verse
-  const verseOrder = song.verseOrder || song.verses.map(v => v.id);
-
-  // Für jeden Vers in der Reihenfolge
-  for (const verseId of verseOrder) {
-    const verse = song.verses.find(v => v.id === verseId);
-    if (!verse) continue;
-
-    // Teile die Zeilen in Slides auf
-    const verseSlides = splitVerseIntoSlides(verse.lines, maxLinesPerSlide);
-    allSlides.push(...verseSlides);
-  }
+  allSlides.push(...song.verses.map(verse => verse.lines));
 
   slides.value = allSlides;
 };
@@ -306,7 +291,7 @@ const openProjector = () => {
 };
 
 // Hilfsfunktion: Nachricht an den Projektor senden
-const sendToProjector = (message: any): boolean => {
+const sendToProjector = (message: unknown): boolean => {
   const win = projectorWindow.value;
   if (win && !win.closed) {
     try {
@@ -352,10 +337,6 @@ const handleNextSong = () => {
 
 const handlePrevSong = () => {
   sendToProjector({ type: 'prevSong' });
-};
-
-const jumpToSong = (songId: string) => {
-  sendToProjector({ type: 'jumpToSong', songId });
 };
 
 // Projektor-Fenster-Einstellungen

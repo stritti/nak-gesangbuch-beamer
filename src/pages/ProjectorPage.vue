@@ -25,14 +25,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, onUnmounted } from 'vue';
+import { ref, onMounted, watch, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useProjectionStore } from '@/features/projection/projection.store';
 import { useSongStore } from '@/features/songs/song.store';
 import { useSetlistStore } from '@/features/setlist/setlist.store';
 import ProjectionScreen from '@/components/ProjectionScreen.vue';
 import { Song, Verse } from '@/features/songs/song.types';
-import { splitVerseIntoSlides } from '@/utils/slideUtils';
 
 const route = useRoute();
 const projectionStore = useProjectionStore();

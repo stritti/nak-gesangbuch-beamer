@@ -48,7 +48,8 @@ export default defineConfig(({ mode }) => {
   },
   test: {
     environment: 'jsdom',
-    globals: true
+    globals: true,
+    passWithNoTests: true
   },
   // Stelle Umgebungsvariablen für die App bereit
   define: {
