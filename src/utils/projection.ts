@@ -17,7 +17,7 @@ export function openProjectorWindow(options: {
   setlistId?: string;
 }): Window | null {
   // Bestimme die URL für das Projektorfenster
-  let url = '/projector';
+  let url = `${import.meta.env.BASE_URL}projector`;
   const params = new URLSearchParams();
   
   if (options.songId) {
@@ -204,7 +204,7 @@ export function getProjectorWindow(): Window | null {
   
   // Wenn kein Fenster gefunden wurde oder es nicht zugänglich ist, öffne ein neues
   const windowFeatures = localStorage.getItem('projectorWindowFeatures') || 'width=1024,height=768';
-  globalProjectorWindow = window.open('/projector', 'projector', windowFeatures);
+  globalProjectorWindow = window.open(`${import.meta.env.BASE_URL}projector`, 'projector', windowFeatures);
   
   if (globalProjectorWindow) {
     localStorage.setItem('projectorWindowOpen', 'true');

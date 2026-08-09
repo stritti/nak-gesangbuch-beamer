@@ -252,7 +252,7 @@ const openProjector = () => {
   const windowFeatures = localStorage.getItem('projectorWindowFeatures') || 'width=1024,height=768';
   
   // Erstelle die URL basierend auf den Parametern
-  let url = '/projector';
+  let url = `${import.meta.env.BASE_URL}projector`;
   const params = new URLSearchParams();
   
   if (songId) {
