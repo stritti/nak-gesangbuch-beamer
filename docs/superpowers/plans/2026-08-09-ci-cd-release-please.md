@@ -648,3 +648,57 @@ git push origin main
 | `.github/workflows/release-please.yml` | 4 | neu |
 | `.github/workflows/deploy.yml` | 5 | neu |
 | `AGENTS.md` | 6 | neu |
+| `src/router/index.ts` | 8 | ändern (createWebHistory(BASE_URL)) |
+| `src/utils/projection.ts`, `src/pages/ControlPage.vue` | 8 | ändern (Projektor-URLs base-relativ) |
+
+### Task 8: Base-Pfad in Router + Projektor-URLs (Pages-Subpfad)
+
+**Hintergrund (Oracle-Review-Befund A, vor Push):** `vite.config.ts` setzt `base` aus `VITE_BASE_PATH`, aber Router und Projektor nutzen absolute Root-Pfade. Unter `/nak-gesangbuch-beamer/` (GitHub Pages) routet das ins Leere — die App wäre nach dem Deploy funktional kaputt.
+
+**Files:**
+- Modify: `src/router/index.ts` (Base-Pfad)
+- Modify: `src/utils/projection.ts` (Projektor-URLs)
+- Modify: `src/pages/ControlPage.vue` (Projektor-URLs)
+
+**Interfaces:**
+- Consumes: `base`-Wert aus `vite.config.ts` (`process.env.VITE_BASE_PATH || '/'`); Vite stellt `import.meta.env.BASE_URL` bereit (endet mit `/`).
+- Produces: Router unter dem Pages-Subpfad erreichbar; Projektor-URLs base-relativ.
+
+- [ ] **Step 1: Router auf BASE_URL umstellen**
+
+In `src/router/index.ts`:
+
+```typescript
+import { createRouter, createWebHistory } from 'vue-router';
+
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  ...
+```
+
+- [ ] **Step 2: Projektor-URLs base-relativ machen**
+
+`src/utils/projection.ts` Zeile ~20 (`let url = '/projector';`) und Zeile ~207 (`window.open('/projector', ...)`) sowie `src/pages/ControlPage.vue` Zeile ~255 (`let url = '/projector';`):
+
+```typescript
+let url = `${import.meta.env.BASE_URL}projector`;
+```
+
+(Achtung: `BASE_URL` endet mit `/` — deshalb `projector` ohne führenden Slash.)
+
+- [ ] **Step 3: Lokal verifizieren (Default-Base '/')**
+
+Run: `npm run lint && npm run typecheck && npm run test && npm run build`
+Expected: alles grün (Exit 0); `dist/index.html` referenziert Assets unter `/assets/...` (Default-Base).
+
+- [ ] **Step 4: Subpfad-Build verifizieren**
+
+Run: `VITE_BASE_PATH=/nak-gesangbuch-beamer/ npm run build && grep -o 'src="/nak-gesangbuch-beamer/assets/[^"]*"' dist/index.html | head -1`
+Expected: Asset-Pfade mit `/nak-gesangbuch-beamer/`-Präfix; danach `git checkout -- dist` oder `rm -rf dist` (dist ist gitignored).
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/router/index.ts src/utils/projection.ts src/pages/ControlPage.vue
+git commit -m "fix: make router and projector urls base-path aware"
+```
