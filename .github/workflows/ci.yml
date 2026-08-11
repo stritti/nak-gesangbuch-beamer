@@ -26,7 +26,7 @@ jobs:
       - name: Commitlint
         uses: wagoid/commitlint-github-action@v6
       - run: npm run lint
-      - run: npm run typecheck
+      # Typecheck ist in npm run build (vue-tsc) enthalten — nicht doppelt ausführen
       - run: npm run test
 
   build:
@@ -46,7 +46,7 @@ jobs:
           VITE_BASE_PATH: ${{ github.ref == 'refs/heads/main' && '/nak-gesangbuch-beamer/' || '/' }}
       - name: Upload dist artifact
         if: github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist
