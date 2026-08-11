@@ -7,7 +7,7 @@ const DEFAULT_WINDOW_FEATURES = 'width=1024,height=768';
 
 /** Baut die Projektor-URL aus BASE_URL und Query-Parameter (pure). */
 export function buildProjectorUrl(options: { songId?: string; setlistId?: string }): string {
-  let url = `${import.meta.env.BASE_URL}projector`;
+  const url = `${import.meta.env.BASE_URL}projector`;
   const params = new URLSearchParams();
   if (options.songId) params.append('songId', options.songId);
   if (options.setlistId) params.append('setlistId', options.setlistId);
