@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
   return {
-  base: process.env.VITE_BASE_PATH || '/',
+  base: env.VITE_BASE_PATH || '/',
   plugins: [
     vue(),
     VitePWA({
@@ -45,11 +45,6 @@ export default defineConfig(({ mode }) => {
     alias: {
       '@': resolve(__dirname, './src')
     }
-  },
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    passWithNoTests: true
   },
   // Stelle Umgebungsvariablen für die App bereit
   define: {
