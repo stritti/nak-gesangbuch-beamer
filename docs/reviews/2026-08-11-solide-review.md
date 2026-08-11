@@ -2,21 +2,19 @@
 
 Datum: 2026-08-11 · Status: umgesetzt (Option B — fokussierte Modernisierung)
 
-## Findings & umgesetzte Maßnahmen
+## Erledigte Maßnahmen
 
-| Bereich | Finding | Maßnahme | Task |
-|---|---|---|---|
-| Build | `passWithNoTests` versteckte fehlende Tests | Vitest-Konfig in `vitest.config.ts`; Option entfernt | 1 |
-| Build | `base` las `process.env` statt `loadEnv` | konsistent aus `env` | 1 |
-| CI | doppelter Typecheck (tsc + vue-tsc) | `typecheck`-Schritt im CI entfernt | 2 |
-| CI | veraltete Artifact-Actions v5 | upload/download auf v7 | 2 |
-| PWA | keine Dev-PWA, kein Daten-Caching | `devOptions.enabled`, Workbox NetworkFirst für `/data` | 3 |
-| Transformation | permissives `unknown → Song` | engmaschige Guards + Tests | 4 |
-| DRY | `getBookName` 6× dupliziert | zentrales Modul `book-names.ts` | 5 |
-| SOLID (SRP) | Slide-Logik in 2 Pages dupliziert & inkonsistent | `buildSlides` pur; Vorschau = Projektor-Logik | 6 |
-| SOLID (DIP) | zustandsbehaftetes `utils/projection.ts` | `ProjectorWindowManager`-Service; util als Wrapper | 7 |
-| SOLID (SRP) | Setlist-Store mit Storage vermischt | `setlist.types.ts` + `setlist.storage.ts` | 8 |
-| SOLID | `projection.store` persistierte Laufzeit-Zustand | `persist.pick` auf Präferenzen | 8 |
+- [x] **Build:** Vitest-Konfig in `vitest.config.ts` ausgelagert; `passWithNoTests` entfernt (Task 1)
+- [x] **Build:** `base` konsistent aus `loadEnv` statt `process.env` (Task 1)
+- [x] **CI:** redundanter `typecheck`-Schritt entfernt (Build deckt `vue-tsc` ab) (Task 2)
+- [x] **CI:** Artifact-Actions auf v7 aktualisiert (Task 2)
+- [x] **PWA:** `devOptions.enabled`, Workbox-NetworkFirst-Caching für `/data`, Icon-`purpose` korrigiert (Task 3)
+- [x] **Transformation:** NAK-Transformer mit engmaschigen Guards typisiert + Tests (Task 4)
+- [x] **DRY:** `getBookName` (6× dupliziert) in zentralem Modul `book-names.ts` (Task 5)
+- [x] **SOLID (SRP):** Slide-Aufbereitung in `buildSlides` vereinheitlicht; Vorschau = Projektor-Logik (Task 6)
+- [x] **SOLID (DIP):** `ProjectorWindowManager`-Service; `utils/projection.ts` als Wrapper (Task 7)
+- [x] **SOLID (SRP):** Setlist-Store in `setlist.types.ts` + `setlist.storage.ts` getrennt (Task 8)
+- [x] **SOLID:** `projection.store` persistiert nur Präferenzen (`persist.pick`) (Task 8)
 
 ## Testabdeckung (neu)
 
@@ -25,12 +23,12 @@ Datum: 2026-08-11 · Status: umgesetzt (Option B — fokussierte Modernisierung)
 
 ## Offene Empfehlungen (nächste Schritte)
 
-- **Major-Upgrades (Option C):** Vite 4→7/8, Vitest 0.34→4, vite-plugin-pwa 0.16→1.x, @vitejs/plugin-vue 4→6 — eng gekoppelt, gemeinsam angehen.
-- `ControlPage.vue`/`ProjectorPage.vue` weiter entschlacken (Message-Protokoll als typisierte Discriminated Union).
-- `ProjectionScreen.vue` Font-Fitting/Hotkeys in Composables extrahieren.
-- `song.repository.ts`/`nak.repository.ts` in Fetch/Validierung/Suche/Persistenz splitten.
-- `deploy.yml` auf Single-Workflow mit `needs:` konsolidieren (Optional).
-- Coverage (`@vitest/coverage-v8`) nach Vitest-Upgrade ergänzen.
+- [ ] **Major-Upgrades (Option C):** Vite 4→7/8, Vitest 0.34→4, vite-plugin-pwa 0.16→1.x, @vitejs/plugin-vue 4→6 — eng gekoppelt, gemeinsam angehen.
+- [ ] `ControlPage.vue`/`ProjectorPage.vue` weiter entschlacken (Message-Protokoll als typisierte Discriminated Union).
+- [ ] `ProjectionScreen.vue` Font-Fitting/Hotkeys in Composables extrahieren.
+- [ ] `song.repository.ts`/`nak.repository.ts` in Fetch/Validierung/Suche/Persistenz splitten.
+- [ ] `deploy.yml` auf Single-Workflow mit `needs:` konsolidieren (Optional).
+- [ ] Coverage (`@vitest/coverage-v8`) nach Vitest-Upgrade ergänzen.
 
 ## Verifikation
 
