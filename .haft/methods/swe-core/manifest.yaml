@@ -1,0 +1,15 @@
+catalog_id: swe-core
+catalog_version: 1.0.0
+haft_feature: methodpack-v1
+materialized_at: "2026-08-11T20:37:51Z"
+local_override_policy: preserve_existing_files
+methods:
+    - problem-closure-hygiene
+    - graph-preflight-before-governed-edit
+    - verification-before-completion
+    - systematic-debugging-before-fix
+    - behavior-first-testing
+    - refactor-only-under-tests
+    - domain-port-before-adapter
+    - functional-core-imperative-shell
+    - make-illegal-states-unrepresentable

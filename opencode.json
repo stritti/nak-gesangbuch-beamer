@@ -1,0 +1,16 @@
+{
+  "mcp": {
+    "haft": {
+      "command": [
+        "haft",
+        "serve"
+      ],
+      "enabled": true,
+      "environment": {
+        "HAFT_EXPECTED_PROJECT_ID": "qnt_35850181",
+        "HAFT_PROJECT_ROOT": "."
+      },
+      "type": "local"
+    }
+  }
+}

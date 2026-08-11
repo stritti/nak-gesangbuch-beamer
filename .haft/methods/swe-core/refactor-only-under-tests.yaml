@@ -1,0 +1,56 @@
+id: refactor-only-under-tests
+version: 1.0.0
+title: Refactor only under tests
+summary: Behavior-preserving refactors need a before/after test boundary.
+intent: A refactor should preserve public behavior; baseline and post-change checks make that claim concrete.
+problem_context: Non-trivial software engineering work where a task-local MethodPack card can reduce omissions.
+first_useful_move: Run or identify the existing behavior checks before editing.
+expected_output_kinds:
+    - method_run_closeout
+    - verification_evidence
+fit_function_refs:
+    - process_check:method_run_hard_gates
+carrier_refs:
+    - internal/method/builtin.go
+    - .haft/methods/swe-core/refactor-only-under-tests.yaml
+source_pattern_refs:
+    - fpf:A.10
+    - fpf:B.3
+lifecycle:
+    status: current
+    valid_from: "2026-06-25"
+source_posture:
+    source_kind: methodpack_card
+    source_edition: swe-core@1.0.0
+    normativity: support_carrier_non_normative_fpf
+    authority_boundary: method_cards_route_work_and_closeout_gates; they do not define normative FPF source material, binding decisions, evidence truth, or gate passage
+applies_to:
+    task_kinds:
+        - refactor
+    change_intents:
+        - refactor
+hard_gates:
+    - gate_id: baseline_and_post_refactor_checks_recorded
+      gate_kind: test_evidence
+      check_level: deterministic
+      pass_condition: The closeout records baseline and post-change verification, or an explicit reason the baseline was unavailable.
+      required_evidence:
+        - baseline_test_output
+        - post_change_test_output
+      waiver:
+        allowed: true
+        requires_reason: true
+procedure:
+    - Run or identify the existing behavior checks before editing.
+    - Make structure-only changes.
+    - Run the same checks after editing.
+anti_patterns:
+    - Adding feature semantics in a refactor.
+    - Refactoring with no behavior check.
+required_evidence:
+    - baseline_test_output
+    - post_change_test_output
+waiver:
+    allowed: true
+    requires_reason: true
+priority: 20

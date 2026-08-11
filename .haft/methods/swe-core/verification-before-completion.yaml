@@ -1,0 +1,77 @@
+id: verification-before-completion
+version: 1.0.0
+title: Verification before completion
+summary: Completion claims need fresh verification evidence.
+intent: Do not claim work is done until the relevant check has actually run or an explicit waiver is recorded.
+problem_context: Non-trivial software engineering work where a task-local MethodPack card can reduce omissions.
+first_useful_move: Identify the narrowest relevant verification before editing.
+expected_output_kinds:
+    - method_run_closeout
+    - verification_evidence
+fit_function_refs:
+    - process_check:method_run_hard_gates
+carrier_refs:
+    - internal/method/builtin.go
+    - .haft/methods/swe-core/verification-before-completion.yaml
+source_pattern_refs:
+    - fpf:A.10
+    - fpf:B.3
+    - fpf:A.15
+lifecycle:
+    status: current
+    valid_from: "2026-06-25"
+source_posture:
+    source_kind: methodpack_card
+    source_edition: swe-core@1.0.0
+    normativity: support_carrier_non_normative_fpf
+    authority_boundary: method_cards_route_work_and_closeout_gates; they do not define normative FPF source material, binding decisions, evidence truth, or gate passage
+applies_to:
+    task_kinds:
+        - feature
+        - bugfix
+        - debug
+        - refactor
+        - external_integration
+        - architecture
+    change_intents:
+        - add_feature
+        - fix_bug
+        - refactor
+        - change_behavior
+    risk_signals:
+        - failing_test
+        - behavior_change
+        - external_io
+        - domain_boundary
+        - governed_file
+does_not_apply_to:
+    task_kinds:
+        - mechanical_edit
+        - formatting_only
+hard_gates:
+    - gate_id: fresh_verification_before_completion
+      gate_kind: test_evidence
+      check_level: deterministic
+      pass_condition: A relevant test, build, runtime check, or diff inspection is recorded before completion.
+      required_evidence:
+        - command_output
+        - runtime_check
+        - diff_inspection
+      waiver:
+        allowed: true
+        requires_reason: true
+procedure:
+    - Identify the narrowest relevant verification before editing.
+    - Run that verification after the change.
+    - Record the command/result or explicit waiver before claiming completion.
+anti_patterns:
+    - Completion claim with no fresh evidence.
+    - Assuming a check passed because the change is small.
+required_evidence:
+    - command_output
+    - runtime_check
+    - diff_inspection
+waiver:
+    allowed: true
+    requires_reason: true
+priority: 90

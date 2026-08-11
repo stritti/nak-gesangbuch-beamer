@@ -1,0 +1,79 @@
+id: functional-core-imperative-shell
+version: 1.0.0
+title: Functional core, imperative shell
+summary: Business logic belongs in a pure core; side effects stay at the boundary.
+intent: Keep policy, calculation, and state transitions testable without mocks by separating them from IO orchestration.
+problem_context: Non-trivial software engineering work where a task-local MethodPack card can reduce omissions.
+first_useful_move: Name the domain calculation, policy, or transition that must be pure.
+expected_output_kinds:
+    - method_run_closeout
+    - verification_evidence
+fit_function_refs:
+    - process_check:method_run_hard_gates
+carrier_refs:
+    - internal/method/builtin.go
+    - .haft/methods/swe-core/functional-core-imperative-shell.yaml
+source_pattern_refs:
+    - fpf:A.15
+lifecycle:
+    status: current
+    valid_from: "2026-06-25"
+source_posture:
+    source_kind: methodpack_card
+    source_edition: swe-core@1.0.0
+    normativity: support_carrier_non_normative_fpf
+    authority_boundary: method_cards_route_work_and_closeout_gates; they do not define normative FPF source material, binding decisions, evidence truth, or gate passage
+applies_to:
+    task_kinds:
+        - refactor
+        - architecture
+    risk_signals:
+        - business_logic
+        - domain_policy
+        - side_effect_boundary
+        - io_boundary
+        - hard_to_test
+does_not_apply_to:
+    task_kinds:
+        - mechanical_edit
+        - formatting_only
+hard_gates:
+    - gate_id: pure_core_named_before_shell
+      gate_kind: code_shape
+      check_level: human_review
+      pass_condition: The closeout identifies the pure core boundary and the side-effect shell boundary.
+      required_evidence:
+        - diff_ref
+        - test_ref
+        - review_note
+      waiver:
+        allowed: true
+        requires_reason: true
+    - gate_id: core_testable_without_external_effects
+      gate_kind: test_evidence
+      check_level: human_review
+      pass_condition: Core behavior is tested or inspectable without mocking transport, filesystem, network, or database details.
+      required_evidence:
+        - unit_test
+        - diff_ref
+        - review_note
+      waiver:
+        allowed: true
+        requires_reason: true
+soft_gates:
+    - Prefer data-in/data-out functions for the core and a thin orchestration shell for effects.
+procedure:
+    - Name the domain calculation, policy, or transition that must be pure.
+    - Keep IO and external calls in the outer shell.
+    - Verify core behavior through direct inputs and outputs where practical.
+anti_patterns:
+    - Business policy hidden in a database, HTTP, CLI, or vendor adapter.
+    - Tests that require mocks because the core and shell are inseparable.
+required_evidence:
+    - diff_ref
+    - test_ref
+    - review_note
+waiver:
+    allowed: true
+    requires_reason: true
+priority: 35

@@ -1,0 +1,79 @@
+id: domain-port-before-adapter
+version: 1.0.0
+title: Domain port before adapter
+summary: External systems are reached through domain-owned ports.
+intent: Name the domain capability before implementing transport, persistence, or vendor-specific adapter code.
+problem_context: Non-trivial software engineering work where a task-local MethodPack card can reduce omissions.
+first_useful_move: Name the domain capability needed from the external system.
+expected_output_kinds:
+    - method_run_closeout
+    - verification_evidence
+fit_function_refs:
+    - process_check:method_run_hard_gates
+carrier_refs:
+    - internal/method/builtin.go
+    - .haft/methods/swe-core/domain-port-before-adapter.yaml
+source_pattern_refs:
+    - fpf:A.6
+    - fpf:A.15
+lifecycle:
+    status: current
+    valid_from: "2026-06-25"
+source_posture:
+    source_kind: methodpack_card
+    source_edition: swe-core@1.0.0
+    normativity: support_carrier_non_normative_fpf
+    authority_boundary: method_cards_route_work_and_closeout_gates; they do not define normative FPF source material, binding decisions, evidence truth, or gate passage
+applies_to:
+    task_kinds:
+        - external_integration
+    risk_signals:
+        - external_io
+        - domain_boundary
+        - persistence
+        - api_client
+        - notification
+    path_contains:
+        - github
+        - slack
+        - db
+        - persistence
+        - adapter
+hard_gates:
+    - gate_id: domain_port_named_before_adapter
+      gate_kind: boundary_policy
+      check_level: human_review
+      pass_condition: The closeout identifies the domain port/capability before adapter implementation details.
+      required_evidence:
+        - diff_ref
+        - test_ref
+      waiver:
+        allowed: true
+        requires_reason: true
+    - gate_id: adapter_does_not_own_business_policy
+      gate_kind: code_shape
+      check_level: human_review
+      pass_condition: Business policy remains outside the transport/vendor adapter.
+      required_evidence:
+        - diff_ref
+        - review_note
+      waiver:
+        allowed: true
+        requires_reason: true
+soft_gates:
+    - Avoid transport/vendor types in the domain boundary.
+procedure:
+    - Name the domain capability needed from the external system.
+    - Define or identify the port at the domain/orchestration boundary.
+    - Implement adapter code at the effect boundary.
+anti_patterns:
+    - Business decision in HTTP/DB/vendor adapter.
+    - Domain layer importing transport-specific types.
+required_evidence:
+    - diff_ref
+    - test_ref
+    - review_note
+waiver:
+    allowed: true
+    requires_reason: true
+priority: 25

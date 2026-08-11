@@ -1,0 +1,62 @@
+id: problem-closure-hygiene
+version: 1.0.0
+title: Problem closure hygiene
+summary: Completed work must leave linked or deliberately suspended problems.
+intent: Do not claim implementation work is done while a linked ProblemCard remains active/backlog with no SolutionPortfolio, DecisionRecord, or supporting evidence path.
+problem_context: Non-trivial software engineering work where a task-local MethodPack card can reduce omissions.
+first_useful_move: List ProblemCards linked to the MethodRun before close.
+expected_output_kinds:
+    - method_run_closeout
+    - verification_evidence
+fit_function_refs:
+    - process_check:method_run_hard_gates
+carrier_refs:
+    - internal/method/builtin.go
+    - .haft/methods/swe-core/problem-closure-hygiene.yaml
+source_pattern_refs:
+    - fpf:E.9
+    - fpf:A.10
+    - fpf:A.15
+lifecycle:
+    status: current
+    valid_from: "2026-06-25"
+source_posture:
+    source_kind: methodpack_card
+    source_edition: swe-core@1.0.0
+    normativity: support_carrier_non_normative_fpf
+    authority_boundary: method_cards_route_work_and_closeout_gates; they do not define normative FPF source material, binding decisions, evidence truth, or gate passage
+applies_to:
+    risk_signals:
+        - problem_closure_hygiene
+        - governed_workflow_change
+does_not_apply_to:
+    task_kinds:
+        - mechanical_edit
+        - formatting_only
+hard_gates:
+    - gate_id: problem_graph_closure_hygiene_recorded
+      gate_kind: graph_hygiene
+      check_level: deterministic
+      pass_condition: Each linked active ProblemCard has a SolutionPortfolio, DecisionRecord, or supporting evidence path, or an explicit waiver records why it remains open.
+      required_evidence:
+        - problem_ref
+        - linked_artifact_ref_or_evidence_ref
+        - status_or_query_ref
+      waiver:
+        allowed: true
+        requires_reason: true
+procedure:
+    - List ProblemCards linked to the MethodRun before close.
+    - Confirm each has a graph path to a SolutionPortfolio, DecisionRecord, or supporting evidence.
+    - Waive only when the operator deliberately leaves the problem open, with a reason.
+anti_patterns:
+    - Closing implementation work while the related ProblemCard still looks like untouched backlog.
+    - Treating tests or changelog text as graph closure without a link/evidence path.
+required_evidence:
+    - problem_ref
+    - linked_artifact_ref_or_evidence_ref
+    - status_or_query_ref
+waiver:
+    allowed: true
+    requires_reason: true
+priority: 4

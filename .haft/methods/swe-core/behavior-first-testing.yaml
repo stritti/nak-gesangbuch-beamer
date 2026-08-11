@@ -1,0 +1,67 @@
+id: behavior-first-testing
+version: 1.0.0
+title: Behavior-first testing
+summary: User-visible behavior changes need behavior-level evidence.
+intent: Define the behavior being changed and verify it through the highest practical public boundary.
+problem_context: Non-trivial software engineering work where a task-local MethodPack card can reduce omissions.
+first_useful_move: Name the public behavior that changes.
+expected_output_kinds:
+    - method_run_closeout
+    - verification_evidence
+fit_function_refs:
+    - process_check:method_run_hard_gates
+carrier_refs:
+    - internal/method/builtin.go
+    - .haft/methods/swe-core/behavior-first-testing.yaml
+source_pattern_refs:
+    - fpf:A.10
+    - fpf:B.3
+lifecycle:
+    status: current
+    valid_from: "2026-06-25"
+source_posture:
+    source_kind: methodpack_card
+    source_edition: swe-core@1.0.0
+    normativity: support_carrier_non_normative_fpf
+    authority_boundary: method_cards_route_work_and_closeout_gates; they do not define normative FPF source material, binding decisions, evidence truth, or gate passage
+applies_to:
+    task_kinds:
+        - feature
+        - external_integration
+    change_intents:
+        - add_feature
+        - change_behavior
+    risk_signals:
+        - behavior_change
+        - public_api
+        - external_io
+hard_gates:
+    - gate_id: public_behavior_evidence_recorded
+      gate_kind: test_evidence
+      check_level: human_review
+      pass_condition: The closeout records a public behavior, integration, or API-level check for the changed behavior.
+      required_evidence:
+        - e2e_test
+        - integration_test
+        - api_test
+        - runtime_check
+      waiver:
+        allowed: true
+        requires_reason: true
+soft_gates:
+    - Prefer E2E/API/integration evidence over unit-only proof when behavior crosses a boundary.
+procedure:
+    - Name the public behavior that changes.
+    - Add or identify a behavior-level check.
+    - Run it after implementation.
+anti_patterns:
+    - Only testing private helpers for a user-visible behavior change.
+    - Changing behavior under a refactor label.
+required_evidence:
+    - e2e_test
+    - integration_test
+    - api_test
+waiver:
+    allowed: true
+    requires_reason: true
+priority: 30
