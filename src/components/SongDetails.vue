@@ -114,6 +114,7 @@
 
 <script setup lang="ts">
 import { Song } from '@/features/songs/song.types';
+import { getBookName } from '@/features/songs/book-names';
 
 defineProps<{
   song: Song;
@@ -123,16 +124,4 @@ defineEmits<{
   (e: 'add-to-setlist', song: Song): void;
   (e: 'project', song: Song): void;
 }>();
-
-// Hilfsfunktion, um den Buchnamen aus der Buch-ID zu ermitteln
-function getBookName(buchId: string): string {
-  const bookNames: Record<string, string> = {
-    'gb': 'Gesangbuch',
-    'cb': 'Chorbuch',
-    'jl': 'Jugendliederbuch',
-    'kl': 'Kinderliederbuch'
-  };
-  
-  return bookNames[buchId] || buchId.toUpperCase();
-}
 </script>

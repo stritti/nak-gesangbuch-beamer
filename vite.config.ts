@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
   return {
-  base: process.env.VITE_BASE_PATH || '/',
+  base: env.VITE_BASE_PATH || '/',
   plugins: [
     vue(),
     VitePWA({
@@ -24,7 +24,8 @@ export default defineConfig(({ mode }) => {
           {
             src: 'pwa-192x192.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any'
           },
           {
             src: 'pwa-512x512.png',
@@ -38,6 +39,28 @@ export default defineConfig(({ mode }) => {
             purpose: 'any maskable'
           }
         ]
+      },
+      devOptions: {
+        enabled: true
+      },
+      workbox: {
+        runtimeCaching: [
+          {
+            urlPattern: /\/data\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'songs-data',
+              networkTimeoutSeconds: 5,
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 30
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          }
+        ]
       }
     })
   ],
@@ -45,11 +68,6 @@ export default defineConfig(({ mode }) => {
     alias: {
       '@': resolve(__dirname, './src')
     }
-  },
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    passWithNoTests: true
   },
   // Stelle Umgebungsvariablen für die App bereit
   define: {

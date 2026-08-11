@@ -16,32 +16,41 @@ type NAKSongInternal = {
   topics?: string[];
 };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function toLines(value: unknown): string[] | null {
+  if (Array.isArray(value)) return value.map((line) => String(line));
+  if (typeof value === 'string') return [value];
+  return null;
+}
+
 function isNAKSongInternal(obj: unknown): obj is NAKSongInternal {
-  return typeof obj === 'object' && obj !== null && 'title' in obj && 'verses' in obj;
+  return isRecord(obj) && 'title' in obj && 'verses' in obj;
 }
 
 export function transformNAKSongs(nakData: unknown): Song[] {
   if (typeof nakData === 'string') {
     try { nakData = JSON.parse(nakData); } catch { return []; }
   }
-  if (Array.isArray(nakData)) return nakData.filter((i): i is Record<string, unknown> => !!i && typeof i === 'object').map(transformNAKSong);
-  if (nakData && typeof nakData === 'object') {
-    const nakObj = nakData as Record<string, unknown>;
-    if ('songs' in nakObj && Array.isArray(nakObj.songs)) {
-      return (nakObj.songs as unknown[]).filter((i): i is Record<string, unknown> => !!i && typeof i === 'object').map(transformNAKSong);
+  if (Array.isArray(nakData)) return nakData.filter(isRecord).map(transformNAKSong);
+  if (isRecord(nakData)) {
+    if ('songs' in nakData && Array.isArray(nakData.songs)) {
+      return (nakData.songs as unknown[]).filter(isRecord).map(transformNAKSong);
     }
 
     const metadataKeys = ['buecher', 'books', 'metadata', 'info', 'version'];
     const songs: Song[] = [];
-    for (const key in nakObj) {
+    for (const key in nakData) {
       if (metadataKeys.includes(key)) continue;
-      if (Object.prototype.hasOwnProperty.call(nakObj, key) && typeof nakObj[key] === 'object' && nakObj[key] !== null) {
-        const item = nakObj[key];
-        if (item && typeof item === 'object' && ('title' in item || 'number' in item || 'verses' in item)) songs.push(transformNAKSong(item as Record<string, unknown>));
+      if (Object.prototype.hasOwnProperty.call(nakData, key) && isRecord(nakData[key])) {
+        const item = nakData[key];
+        if (isRecord(item) && ('title' in item || 'number' in item || 'verses' in item)) songs.push(transformNAKSong(item));
       }
     }
     if (songs.length > 0) return songs;
-    if (isNAKSongInternal(nakData) || ((nakObj.title || nakObj.number) && (nakObj.verses || nakObj.text))) return [transformNAKSong(nakObj)];
+    if (isNAKSongInternal(nakData) || ((nakData.title || nakData.number) && (nakData.verses || nakData.text))) return [transformNAKSong(nakData)];
   }
   return [];
 }
@@ -52,13 +61,12 @@ export function transformNAKSong(nakSong: Record<string, unknown>): Song {
 
   let verses: Verse[] = [];
   if (nakSong.verses) {
-    if (typeof nakSong.verses === 'object' && !Array.isArray(nakSong.verses)) {
-      verses = Object.entries(nakSong.verses).map(([id, lines]) => ({ id, lines: Array.isArray(lines) ? lines : [String(lines)] }));
+    if (isRecord(nakSong.verses)) {
+      verses = Object.entries(nakSong.verses).map(([id, lines]) => ({ id, lines: toLines(lines) ?? [] }));
     } else if (Array.isArray(nakSong.verses)) {
       verses = nakSong.verses.map((verse: unknown) => {
-        if (typeof verse === 'object' && verse !== null && 'id' in verse && 'lines' in verse) {
-          const v = verse as Record<string, unknown>;
-          return { id: String(v.id), lines: Array.isArray(v.lines) ? (v.lines as string[]) : [String(v.lines)] };
+        if (isRecord(verse) && 'id' in verse && 'lines' in verse) {
+          return { id: String(verse.id), lines: toLines(verse.lines) ?? [] };
         }
         return null;
       }).filter((v): v is Verse => v !== null);
@@ -68,13 +76,12 @@ export function transformNAKSong(nakSong: Record<string, unknown>): Song {
     else if (Array.isArray(nakSong.text)) verses = [{ id: '1', lines: nakSong.text.map(line => String(line)) }];
   } else if (nakSong.strophen || nakSong.strophes) {
     const strophen = nakSong.strophen || nakSong.strophes;
-    if (typeof strophen === 'object' && !Array.isArray(strophen)) {
-      verses = Object.entries(strophen as Record<string, unknown>).map(([id, lines]) => ({ id, lines: Array.isArray(lines) ? lines : [String(lines)] }));
+    if (isRecord(strophen)) {
+      verses = Object.entries(strophen).map(([id, lines]) => ({ id, lines: toLines(lines) ?? [] }));
     } else if (Array.isArray(strophen)) {
       verses = strophen.map((strophe: unknown, index: number) => {
-        if (typeof strophe === 'object' && strophe !== null && 'id' in strophe && 'lines' in strophe) {
-          const s = strophe as Record<string, unknown>;
-          return { id: String(s.id), lines: Array.isArray(s.lines) ? (s.lines as string[]) : [String(s.lines)] };
+        if (isRecord(strophe) && 'id' in strophe && 'lines' in strophe) {
+          return { id: String(strophe.id), lines: toLines(strophe.lines) ?? [] };
         } else if (Array.isArray(strophe)) return { id: String(index + 1), lines: strophe.map(line => String(line)) };
         else if (typeof strophe === 'string') return { id: String(index + 1), lines: [strophe] };
         return null;
@@ -84,8 +91,8 @@ export function transformNAKSong(nakSong: Record<string, unknown>): Song {
   if (verses.length === 0) verses = [{ id: '1', lines: ['[Keine Verse gefunden]'] }];
 
   let refrain: Verse | undefined;
-  if (nakSong.refrain) refrain = { id: 'R', lines: Array.isArray(nakSong.refrain) ? (nakSong.refrain as string[]) : [String(nakSong.refrain)] };
-  else if (nakSong.chorus) refrain = { id: 'R', lines: Array.isArray(nakSong.chorus) ? (nakSong.chorus as string[]) : [String(nakSong.chorus)] };
+  if (nakSong.refrain) refrain = { id: 'R', lines: toLines(nakSong.refrain) ?? [] };
+  else if (nakSong.chorus) refrain = { id: 'R', lines: toLines(nakSong.chorus) ?? [] };
 
   let verseOrder: string[] = [];
   if (nakSong.verseOrder && Array.isArray(nakSong.verseOrder)) verseOrder = nakSong.verseOrder as string[];

@@ -191,6 +191,7 @@ import ControlPanel from '@/components/ControlPanel.vue';
 import HotkeyLegend from '@/components/HotkeyLegend.vue';
 import { Song } from '@/features/songs/song.types';
 import { isProjectorOpen, getProjectorWindow } from '@/utils/projection';
+import { buildSlides } from '@/features/projection/slides';
 
 const route = useRoute();
 const projectionStore = useProjectionStore();
@@ -210,17 +211,8 @@ const totalSetlistItems = ref(0);
 
 // Berechne die Slides basierend auf dem aktuellen Lied
 const prepareSlides = (song: Song | null) => {
-  if (!song) {
-    slides.value = [];
-    return;
-  }
-
   currentSong.value = song;
-  const allSlides: string[][] = [];
-
-  allSlides.push(...song.verses.map(verse => verse.lines));
-
-  slides.value = allSlides;
+  slides.value = buildSlides(song);
 };
 
 // Computed properties für die aktuelle und nächste Folie

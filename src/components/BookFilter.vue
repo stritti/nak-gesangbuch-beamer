@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { nakRepository } from '@/features/ingest/nak.repository';
+import { getBookName } from '@/features/songs/book-names';
 
 const books = ref<Array<{ id: string; title: string; count: number }>>([]);
 const selectedBookId = ref<string | null>(null);
@@ -28,18 +29,6 @@ async function loadBooks() {
 function selectBook(bookId: string | null) {
   selectedBookId.value = bookId === selectedBookId.value ? null : bookId;
   emit('filter', selectedBookId.value);
-}
-
-// Hilfsfunktion, um den Buchnamen aus der Buch-ID zu ermitteln
-function getBookName(buchId: string): string {
-  const bookNames: Record<string, string> = {
-    'gb': 'Gesangbuch',
-    'cb': 'Chorbuch',
-    'jl': 'Jugendliederbuch',
-    'kl': 'Kinderliederbuch'
-  };
-  
-  return bookNames[buchId] || buchId.toUpperCase();
 }
 </script>
 

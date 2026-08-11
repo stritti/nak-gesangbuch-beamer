@@ -92,6 +92,7 @@ import SongCard from '@/components/SongCard.vue';
 import BookFilter from '@/components/BookFilter.vue';
 import { songRepository } from '@/features/songs/song.repository';
 import { nakRepository } from '@/features/ingest/nak.repository';
+import { getBookName } from '@/features/songs/book-names';
 
 const songStore = useSongStore();
 const setlistStore = useSetlistStore();
@@ -154,18 +155,6 @@ const handleBookFilter = (bookId: string | null) => {
   selectedBookId.value = bookId;
   performSearch();
 };
-
-// Hilfsfunktion, um den Buchnamen aus der Buch-ID zu ermitteln
-function getBookName(buchId: string): string {
-  const bookNames: Record<string, string> = {
-    'gb': 'Gesangbuch',
-    'cb': 'Chorbuch',
-    'jl': 'Jugendliederbuch',
-    'kl': 'Kinderliederbuch'
-  };
-  
-  return bookNames[buchId] || buchId.toUpperCase();
-}
 
 // Zeige Details eines Liedes an
 const viewSongDetails = (id: string) => {

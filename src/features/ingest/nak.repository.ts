@@ -4,6 +4,7 @@ import type { Song } from '@/features/songs/song.types';
 import { transformNakDataset } from './nak.parser';
 import * as idb from '@/utils/idb';
 import { readFileAsText } from '@/utils/file';
+import { getBookName } from '@/features/songs/book-names';
 
 /**
  * Repository für den Import, die Validierung und Persistenz von NAK-Daten
@@ -92,7 +93,7 @@ export class NakRepository {
       // Bücher extrahieren und in IndexedDB speichern
       const books = nakData.buecher.map(book => ({
         id: book.id,
-        title: book.title || this.getBookName(book.id),
+        title: book.title || getBookName(book.id),
         count: book.hymnCount || 0
       }));
       
@@ -244,7 +245,7 @@ export class NakRepository {
           // Buchtitel aus der Buch-ID ermitteln
           bookMap.set(buchId, {
             id: buchId,
-            title: this.getBookName(buchId),
+            title: getBookName(buchId),
             count: 1
           });
         } else {
@@ -255,20 +256,6 @@ export class NakRepository {
     }
     
     return Array.from(bookMap.values());
-  }
-
-  /**
-   * Hilfsfunktion, um den Buchnamen aus der Buch-ID zu ermitteln
-   */
-  private getBookName(buchId: string): string {
-    const bookNames: Record<string, string> = {
-      'gb': 'Gesangbuch',
-      'cb': 'Chorbuch',
-      'jl': 'Jugendliederbuch',
-      'kl': 'Kinderliederbuch'
-    };
-    
-    return bookNames[buchId] || buchId.toUpperCase();
   }
 
   /**
