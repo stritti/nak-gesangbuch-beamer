@@ -1,18 +1,7 @@
 import { defineStore } from 'pinia';
 import { Song } from '../songs/song.types';
-
-interface SetlistItem {
-  songId: string;
-  verseIds: string[]; // IDs der Verse in der Reihenfolge, wie sie angezeigt werden sollen
-}
-
-interface Setlist {
-  id: string;
-  name: string;
-  items: SetlistItem[];
-  createdAt: string;
-  updatedAt: string;
-}
+import type { Setlist } from './setlist.types';
+import { loadSetlistsFromStorage, saveSetlistsToStorage } from './setlist.storage';
 
 interface SetlistState {
   setlists: Setlist[];
@@ -122,19 +111,12 @@ export const useSetlistStore = defineStore('setlist', {
 
     // Speichern der Setlists im LocalStorage (später IndexedDB)
     saveSetlists() {
-      localStorage.setItem('setlists', JSON.stringify(this.setlists));
+      saveSetlistsToStorage(this.setlists);
     },
 
     // Laden der Setlists aus dem LocalStorage
     loadSetlists() {
-      const stored = localStorage.getItem('setlists');
-      if (stored) {
-        try {
-          this.setlists = JSON.parse(stored);
-        } catch (error) {
-          console.error('Fehler beim Laden der Setlists:', error);
-        }
-      }
+      this.setlists = loadSetlistsFromStorage();
     }
   }
 });

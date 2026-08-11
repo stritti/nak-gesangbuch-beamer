@@ -60,5 +60,7 @@ export const useProjectionStore = defineStore('projection', {
     }
   },
   
-  persist: true
+  persist: {
+    pick: ['fontSize', 'lineHeight', 'theme', 'maxLinesPerSlide']
+  }
 });
