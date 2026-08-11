@@ -31,7 +31,8 @@ import { useProjectionStore } from '@/features/projection/projection.store';
 import { useSongStore } from '@/features/songs/song.store';
 import { useSetlistStore } from '@/features/setlist/setlist.store';
 import ProjectionScreen from '@/components/ProjectionScreen.vue';
-import { Song, Verse } from '@/features/songs/song.types';
+import { Song } from '@/features/songs/song.types';
+import { buildSlides } from '@/features/projection/slides';
 
 const route = useRoute();
 const projectionStore = useProjectionStore();
@@ -44,42 +45,15 @@ const currentSong = ref<Song | null>(null);
 
 // Berechne die Slides basierend auf dem aktuellen Lied
 const prepareSlides = (song: Song | null) => {
-  if (!song) {
-    slides.value = [];
-    return;
-  }
-
   currentSong.value = song;
-  const allSlides: string[][] = [];
+  slides.value = buildSlides(song);
 
-  // Bestimme die Reihenfolge der Verse
-  const verseOrder = song.verseOrder || song.verses.map(v => v.id);
-
-  // Für jeden Vers in der Reihenfolge
-  for (const verseId of verseOrder) {
-    let verse: Verse | undefined;
-
-    // Finde den Vers oder Refrain
-    if (verseId === 'R' && song.refrain) {
-      verse = song.refrain;
-    } else {
-      verse = song.verses.find(v => v.id === verseId);
-    }
-
-    if (!verse) continue;
-
-    // Jede Strophe wird als ein kompletter Slide hinzugefügt
-    allSlides.push(verse.lines);
-  }
-
-  slides.value = allSlides;
-  
   // Informiere das Steuerungsfenster über die Anzahl der Slides
   if (window.opener) {
     window.opener.postMessage({
       type: 'slidesUpdated',
-      totalSlides: allSlides.length,
-      currentSongId: song.id
+      totalSlides: slides.value.length,
+      currentSongId: song?.id
     }, window.location.origin);
   }
 };
