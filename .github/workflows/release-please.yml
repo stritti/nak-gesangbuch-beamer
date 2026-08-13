@@ -7,13 +7,82 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  pages: write
+  id-token: write
+  checks: read
+
+concurrency:
+  group: release-please
+  cancel-in-progress: false
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
     steps:
       - uses: googleapis/release-please-action@v5
+        id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+  # Deploy nur, wenn release-please in diesem Lauf ein Release erstellt hat.
+  # Bewusst im selben Workflow statt `on: release: [published]`: GitHub
+  # unterdrückt Workflow-Runs, die durch GITHUB_TOKEN-Events ausgelöst werden —
+  # ein von release-please erzeugtes Release würde deploy.yml sonst nie starten.
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # CI-Gate: erst deployen, wenn der parallele Verify-Run (ci.yml) für
+      # diesen Push erfolgreich abgeschlossen ist — schützt vor Releases,
+      # deren Lint/Tests fehlschlagen (Deploy baut nur, testet nicht).
+      - name: Wait for CI Verify
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const sha = context.sha;
+            const timeoutMs = 30 * 60 * 1000;
+            const start = Date.now();
+            while (Date.now() - start < timeoutMs) {
+              const { data } = await github.rest.checks.listForRef({
+                owner, repo, ref: sha, per_page: 100,
+              });
+              const verify = data.check_runs.find((c) => c.name === 'Verify');
+              if (verify && verify.status === 'completed') {
+                if (verify.conclusion === 'success') {
+                  console.log(`Verify check passed (${verify.id})`);
+                  return;
+                }
+                core.setFailed(`Verify check concluded with '${verify.conclusion}' — not deploying`);
+                return;
+              }
+              console.log('Verify check not completed yet, retrying in 15s...');
+              await new Promise((r) => setTimeout(r, 15000));
+            }
+            core.setFailed('Timed out waiting for CI Verify check');
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build
+        run: npm run build
+        env:
+          VITE_BASE_PATH: /nak-gesangbuch-beamer/
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
