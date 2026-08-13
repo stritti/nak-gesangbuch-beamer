@@ -26,8 +26,8 @@ Die bestehende Pipeline (Stand 2026-08-09, siehe `2026-08-09-ci-cd-release-pleas
 
 | Thema | Entscheidung |
 |---|---|
-| Deploy-Trigger | **Nur bei Release** (`release: published`), nicht bei jedem main-Push |
-| Deploy-Mechanik | Deploy-Workflow baut aus dem Release-Tag (kein Artifact-Handoff) |
+| Deploy-Trigger | **Nur bei Release** (Deploy-Job gated auf `release_created`), nicht bei jedem main-Push |
+| Deploy-Mechanik | Deploy-Job im `release-please.yml` (kein Artifact-Handoff, kein `release: published`-Trigger — GITHUB_TOKEN unterdrückt dessen Events) |
 | CI-Struktur | Ein Workflow, ein Job, ein `npm ci` — reine Verifikation |
 | Dependabot | Config mit Gruppen + Auto-Merge-Workflow (Patch/Minor) |
 | release-please | Bleibt eigenständig (unabhängig vom CI-Status, eigene Permissions) |
@@ -38,14 +38,14 @@ Die bestehende Pipeline (Stand 2026-08-09, siehe `2026-08-09-ci-cd-release-pleas
 ```
 push main / PR ──► ci.yml (commitlint → lint → test → build)          [Verifikation]
 push main ──► release-please.yml ──► Release-PR ──► Merge ──► Tag vX.Y.Z + Release + CHANGELOG
-Release published ──► deploy.yml (build aus Tag → Pages)              [Deployment]
+                                      └─► Deploy-Job (if release_created) ──► Pages   [Deployment]
 dependabot PR ──► dependabot-auto-merge.yml (Label + Auto-Merge Patch/Minor)
 ```
 
 Vier unabhängige Concerns, sauber getrennt:
 1. **Verifikation** (`ci.yml`)
 2. **Versionierung/Releases** (`release-please.yml`)
-3. **Deployment** (`deploy.yml`)
+3. **Deployment** (Deploy-Job im `release-please.yml`, gated auf `release_created`)
 4. **Dependency-Automation** (`dependabot.yml` + `dependabot-auto-merge.yml`)
 
 ## Komponenten
@@ -65,26 +65,26 @@ Vier unabhängige Concerns, sauber getrennt:
   - `npm run build` mit `VITE_BASE_PATH` konditional (main → `/nak-gesangbuch-beamer/`, sonst `/`) — nur als Check, kein Artifact-Upload
   - Typecheck ist in `build` enthalten (`vue-tsc`) — nicht doppelt ausführen
 
-### 2. `.github/workflows/deploy.yml` — Deployment nur bei Release
+### 2. Deployment — Deploy-Job in `release-please.yml`
 
-- Trigger: `release: types: [published]` (semantisch; deckt auch manuelle Releases ab)
-- `permissions`: `contents: read`, `pages: write`, `id-token: write`
-- `environment`: `github-pages` (korrekt hier: Job läuft nur bei Release)
-- `concurrency`: Gruppe `pages`, `cancel-in-progress: true`
-- Job `deploy`:
-  - `actions/checkout@v7` (checkt automatisch den Release-Tag aus)
+> Korrektur nach Codex-Review (P1): Ein separater `deploy.yml` mit Trigger `release: published` funktioniert **nicht**, weil GitHub Workflow-Runs unterdrückt, die durch `GITHUB_TOKEN`-Events ausgelöst werden — release-please erzeugt Release + Tag mit `GITHUB_TOKEN`. Der Deploy-Job läuft deshalb im selben Workflow, gated auf den `release_created`-Output des release-please-Actions-Steps.
+
+- `permissions` (Workflow-Ebene): `contents: write`, `pull-requests: write`, `pages: write`, `id-token: write`
+- Job `release-please`:
+  - `googleapis/release-please-action@v5` mit `token: secrets.GITHUB_TOKEN`, `config-file: release-please-config.json`, `manifest-file: .release-please-manifest.json`
+  - Output `release_created` nach außen reichen (Job-Output)
+- Job `deploy` (`needs: release-please`, `if: needs.release-please.outputs.release_created == 'true'`):
+  - `environment`: `github-pages` (Job läuft nur bei Release)
+  - `actions/checkout@v7` (checkt den auslösenden Push-Commit = gemergter Release-Stand)
   - `actions/setup-node@v7` (Node 24, `cache: npm`)
   - `npm ci`
   - `npm run build` mit `VITE_BASE_PATH=/nak-gesangbuch-beamer/` (fester Wert, kein Konditional nötig)
   - `actions/upload-pages-artifact@v5` (path: `dist`)
   - `actions/deploy-pages@v5`
 
-### 3. `.github/workflows/release-please.yml` — unverändert
+### 3. `release-please.yml` — Concurrency-Guard
 
-- Trigger: `push` (main)
-- `permissions`: `contents: write`, `pull-requests: write`
-- Step: `googleapis/release-please-action@v5` mit `token: secrets.GITHUB_TOKEN`, `config-file: release-please-config.json`, `manifest-file: .release-please-manifest.json`
-- Neu: `concurrency: group: release-please, cancel-in-progress: false` als Race-Guard gegen parallele Release-PR-Erzeugung
+- `concurrency: group: release-please, cancel-in-progress: false` als Race-Guard gegen parallele Release-PR-Erzeugung.
 
 ### 4. `.github/workflows/dependabot-auto-merge.yml` — neu
 
@@ -114,18 +114,19 @@ Vier unabhängige Concerns, sauber getrennt:
 ### 6. `AGENTS.md`
 
 Pipeline-Beschreibung an die neue Struktur anpassen:
-- Datenfluss: `push main/PR → CI grün → Release-PR → Merge → Tag+Release → deploy.yml → Pages`
+- Datenfluss: `push main/PR → CI grün → Release-PR → Merge → Tag+Release → Deploy-Job (release_created) → Pages`
 - Deploy nur bei Release, nicht bei jedem main-Push
 - Dependabot-Automation dokumentieren
 
 ## Fehlerbehandlung
 
-- **Deploy nur bei Release**: `release: published` verhindert Deployment bei jedem main-Push; nur veröffentlichte Releases deployen.
-- **Deploy nie bei rotem CI**: Release-PR-Merge setzt grünes CI voraus (Branch-Protection); der Tag zeigt auf den gemergten, verifizierten Stand.
-- **Kein Deploy-Spaghetti**: kein Deploy-Trigger auf Tags/PRs, nur auf `release: published` — eine klare Quelle.
+- **Deploy nur bei Release**: Deploy-Job gated auf `release_created` — kein Deployment bei jedem main-Push.
+- **GITHUB_TOKEN-Event-Unterdrückung**: kein `release: published`-Trigger (Events von `GITHUB_TOKEN` starten keine neuen Workflow-Runs); Deploy läuft im selben Workflow wie release-please.
+- **Deploy nie bei rotem CI**: Release-PR-Merge setzt grünes CI voraus (Branch-Protection); der Deploy-Job baut den gemergten, verifizierten Stand.
+- **Kein Deploy-Spaghetti**: eine klare Quelle — der Deploy-Job im release-please-Workflow.
 - **commitlint als CI-Gate**: hält die Conventional-Commit-Konvention (release-please-Vertrag) durch.
-- **Parallele Deploys**: `concurrency`-Gruppe `pages` verhindert Race Conditions.
-- **Dependabot-Auto-Merge-Sicherheit**: nur Patch/Minor, nur Dependabot-Actor, `pull_request_target` mit Actor-Guard; Major-Updates manuell.
+- **Parallele Deploys**: `concurrency`-Gruppe `release-please` (cancel-in-progress: false) verhindert Race Conditions.
+- **Dependabot-Auto-Merge-Sicherheit**: nur Patch/Minor, nur Dependabot-Actor, `pull_request_target` mit Actor-Guard; Approve mit `continue-on-error` (Setting „Allow GitHub Actions to create and approve pull requests" kann deaktiviert sein); Major-Updates manuell.
 
 ## Test-/Verifikationsstrategie
 
@@ -134,17 +135,17 @@ Pipeline-Beschreibung an die neue Struktur anpassen:
 - Funktionsnachweis erst server-seitig nach Push auf main:
   - `ci.yml` grün auf main und PRs
   - release-please erzeugt Release-PR → nach Merge Tag + Release + CHANGELOG
-  - `deploy.yml` deployt nach Release-Publish → App erreichbar unter `https://stritti.github.io/nak-gesangbuch-beamer/`
+  - Deploy-Job deployt bei `release_created` → App erreichbar unter `https://stritti.github.io/nak-gesangbuch-beamer/`
   - Dependabot-PR (Patch/Minor) wird gelabelt und automatisch gemerged
-- **Einmalige manuelle Voraussetzung (Nutzer)**: Repo-Settings → Pages → Source **„GitHub Actions"**; „Allow auto-merge" aktivieren; optional Branch-Protection auf main („CI checks must pass").
+- **Einmalige manuelle Voraussetzung (Nutzer)**: Repo-Settings → Pages → Source **„GitHub Actions"**; „Allow auto-merge" und „Allow GitHub Actions to create and approve pull requests" aktivieren; optional Branch-Protection auf main („CI checks must pass").
 
 ## Betroffene Dateien
 
 | Datei | Aktion |
 |---|---|
 | `.github/workflows/ci.yml` | umbauen (ein Job, kein Artifact, kein Deploy) |
-| `.github/workflows/deploy.yml` | umbauen (Trigger `release: published`, Build aus Tag) |
-| `.github/workflows/release-please.yml` | ändern (concurrency-Guard) |
-| `.github/workflows/dependabot-auto-merge.yml` | neu |
+| `.github/workflows/release-please.yml` | umbauen (concurrency-Guard + Deploy-Job gated auf `release_created`) |
+| `.github/workflows/deploy.yml` | löschen (Deploy-Job wandert in release-please.yml) |
+| `.github/workflows/dependabot-auto-merge.yml` | neu (Approve mit `continue-on-error`) |
 | `.github/dependabot.yml` | ändern (Gruppen, versioning-strategy) |
 | `AGENTS.md` | ändern (Pipeline-Beschreibung) |
