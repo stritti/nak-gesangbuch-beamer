@@ -6,6 +6,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  checks: read
 
 jobs:
   dependabot:
@@ -32,6 +33,35 @@ jobs:
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # CI-Gate: gh pr merge --auto wartet nur auf *required* Checks. Ohne
+      # Branch-Protection (Verify als required) könnte der PR vor/früher als
+      # CI mergen — daher explizit auf den Verify-Check des PR-Head warten.
+      - name: Wait for CI Verify
+        if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor' }}
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const sha = context.payload.pull_request.head.sha;
+            const timeoutMs = 30 * 60 * 1000;
+            const start = Date.now();
+            while (Date.now() - start < timeoutMs) {
+              const { data } = await github.rest.checks.listForRef({
+                owner, repo, ref: sha, per_page: 100,
+              });
+              const verify = data.check_runs.find((c) => c.name === 'Verify');
+              if (verify && verify.status === 'completed') {
+                if (verify.conclusion === 'success') {
+                  console.log(`Verify check passed (${verify.id})`);
+                  return;
+                }
+                core.setFailed(`Verify check concluded with '${verify.conclusion}' — not enabling auto-merge`);
+                return;
+              }
+              console.log('Verify check not completed yet, retrying in 15s...');
+              await new Promise((r) => setTimeout(r, 15000));
+            }
+            core.setFailed('Timed out waiting for CI Verify check');
       - name: Enable auto-merge
         if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor' }}
         run: gh pr merge --auto --squash "$PR_URL"

@@ -9,6 +9,7 @@ permissions:
   pull-requests: write
   pages: write
   id-token: write
+  checks: read
 
 concurrency:
   group: release-please
@@ -40,6 +41,34 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # CI-Gate: erst deployen, wenn der parallele Verify-Run (ci.yml) für
+      # diesen Push erfolgreich abgeschlossen ist — schützt vor Releases,
+      # deren Lint/Tests fehlschlagen (Deploy baut nur, testet nicht).
+      - name: Wait for CI Verify
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const sha = context.sha;
+            const timeoutMs = 30 * 60 * 1000;
+            const start = Date.now();
+            while (Date.now() - start < timeoutMs) {
+              const { data } = await github.rest.checks.listForRef({
+                owner, repo, ref: sha, per_page: 100,
+              });
+              const verify = data.check_runs.find((c) => c.name === 'Verify');
+              if (verify && verify.status === 'completed') {
+                if (verify.conclusion === 'success') {
+                  console.log(`Verify check passed (${verify.id})`);
+                  return;
+                }
+                core.setFailed(`Verify check concluded with '${verify.conclusion}' — not deploying`);
+                return;
+              }
+              console.log('Verify check not completed yet, retrying in 15s...');
+              await new Promise((r) => setTimeout(r, 15000));
+            }
+            core.setFailed('Timed out waiting for CI Verify check');
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:

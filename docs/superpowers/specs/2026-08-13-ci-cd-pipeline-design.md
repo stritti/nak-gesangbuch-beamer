@@ -75,6 +75,7 @@ Vier unabhängige Concerns, sauber getrennt:
   - Output `release_created` nach außen reichen (Job-Output)
 - Job `deploy` (`needs: release-please`, `if: needs.release-please.outputs.release_created == 'true'`):
   - `environment`: `github-pages` (Job läuft nur bei Release)
+  - **CI-Gate**: Step „Wait for CI Verify" pollt per `checks.listForRef` den `Verify`-Check des Push-Commits (Timeout 30 min); bei `conclusion != success` bricht der Job ab — kein Deploy bei fehlgeschlagenem Lint/Tests
   - `actions/checkout@v7` (checkt den auslösenden Push-Commit = gemergter Release-Stand)
   - `actions/setup-node@v7` (Node 24, `cache: npm`)
   - `npm ci`
@@ -122,7 +123,8 @@ Pipeline-Beschreibung an die neue Struktur anpassen:
 
 - **Deploy nur bei Release**: Deploy-Job gated auf `release_created` — kein Deployment bei jedem main-Push.
 - **GITHUB_TOKEN-Event-Unterdrückung**: kein `release: published`-Trigger (Events von `GITHUB_TOKEN` starten keine neuen Workflow-Runs); Deploy läuft im selben Workflow wie release-please.
-- **Deploy nie bei rotem CI**: Release-PR-Merge setzt grünes CI voraus (Branch-Protection); der Deploy-Job baut den gemergten, verifizierten Stand.
+- **Deploy nie bei rotem CI**: Deploy-Job wartet per Polling auf den erfolgreichen `Verify`-Check desselben Commits (unabhängig von Branch-Protection-Einstellungen).
+- **Dependabot-Merge nie bei rotem CI**: Auto-Merge wird erst nach erfolgreichem `Verify`-Check des PR-Head aktiviert (`gh pr merge --auto` allein wartet nur auf *required* Checks).
 - **Kein Deploy-Spaghetti**: eine klare Quelle — der Deploy-Job im release-please-Workflow.
 - **commitlint als CI-Gate**: hält die Conventional-Commit-Konvention (release-please-Vertrag) durch.
 - **Parallele Deploys**: `concurrency`-Gruppe `release-please` (cancel-in-progress: false) verhindert Race Conditions.
