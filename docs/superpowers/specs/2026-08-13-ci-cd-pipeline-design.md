@@ -91,11 +91,13 @@ Vier unabhängige Concerns, sauber getrennt:
 
 - Trigger: `pull_request_target`
 - Guard: `if: github.actor == 'dependabot[bot]'`
-- `permissions`: `contents: write`, `pull-requests: write`
+- `permissions`: `contents: write`, `pull-requests: write`, `checks: read`
 - Steps:
   - `dependabot/fetch-metadata@v2` (liefert `update-type`)
   - Label `dependencies` setzen
   - Approve + Auto-Merge (squash) **nur** wenn `update-type` ∈ `version-update:semver-patch` | `version-update:semver-minor`
+  - **CI-Gate**: Wait-Step pollt den `Verify`-Check des PR-Head (Timeout 30 min); Auto-Merge nur bei grünem CI
+  - **SHA-Bindung**: `gh pr merge --auto --match-head-commit <head.sha>` — ein nach dem Polling rebased/synchronisierter Head wird nicht unverifiziert gemerged (nächster synchronize-Run verifiziert neu)
   - Major-Updates bleiben manuell (bewusst)
 
 ### 5. `.github/dependabot.yml` — optimiert

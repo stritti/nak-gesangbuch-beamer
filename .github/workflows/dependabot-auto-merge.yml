@@ -62,9 +62,14 @@ jobs:
               await new Promise((r) => setTimeout(r, 15000));
             }
             core.setFailed('Timed out waiting for CI Verify check');
+      # --match-head-commit bindet den Merge an den verifizierten Head-SHA:
+      # wird der PR nach dem Polling rebased/synchronisiert, mergt Auto-Merge
+      # nicht den unverifizierten neuen Head (der nächste synchronize-Run
+      # verifiziert den neuen Head und aktiviert Auto-Merge erneut).
       - name: Enable auto-merge
         if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor' }}
-        run: gh pr merge --auto --squash "$PR_URL"
+        run: gh pr merge --auto --squash --match-head-commit "$HEAD_SHA" "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
