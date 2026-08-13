@@ -1,0 +1,65 @@
+id: systematic-debugging-before-fix
+version: 1.0.0
+title: Systematic debugging before fix
+summary: Bug fixes need a root-cause hypothesis before patching.
+intent: 'Avoid shotgun edits: reproduce or explain the failure, rank hypotheses, then patch the evidenced cause.'
+problem_context: Non-trivial software engineering work where a task-local MethodPack card can reduce omissions.
+first_useful_move: State the observed failure.
+expected_output_kinds:
+    - method_run_closeout
+    - verification_evidence
+fit_function_refs:
+    - process_check:method_run_hard_gates
+carrier_refs:
+    - internal/method/builtin.go
+    - .haft/methods/swe-core/systematic-debugging-before-fix.yaml
+source_pattern_refs:
+    - fpf:B.5.2
+    - fpf:A.10
+lifecycle:
+    status: current
+    valid_from: "2026-06-25"
+source_posture:
+    source_kind: methodpack_card
+    source_edition: swe-core@1.0.0
+    normativity: support_carrier_non_normative_fpf
+    authority_boundary: method_cards_route_work_and_closeout_gates; they do not define normative FPF source material, binding decisions, evidence truth, or gate passage
+applies_to:
+    task_kinds:
+        - bugfix
+        - debug
+    change_intents:
+        - fix_bug
+    risk_signals:
+        - failing_test
+        - panic
+        - regression
+        - intermittent_failure
+hard_gates:
+    - gate_id: root_cause_named_before_fix
+      gate_kind: debug_evidence
+      check_level: human_review
+      pass_condition: The closeout names the root cause or the best evidenced hypothesis before presenting the patch as a fix.
+      required_evidence:
+        - reproduction
+        - test_ref
+        - log_ref
+        - trace_ref
+      waiver:
+        allowed: true
+        requires_reason: true
+procedure:
+    - State the observed failure.
+    - Name the strongest root-cause hypothesis.
+    - Patch only after evidence supports the hypothesis.
+anti_patterns:
+    - Trying plausible fixes without reproducing or explaining the failure.
+    - Editing unrelated files during a narrow bugfix.
+required_evidence:
+    - reproduction
+    - test_ref
+    - log_ref
+waiver:
+    allowed: true
+    requires_reason: true
+priority: 10

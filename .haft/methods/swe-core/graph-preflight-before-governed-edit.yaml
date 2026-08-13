@@ -1,0 +1,65 @@
+id: graph-preflight-before-governed-edit
+version: 1.0.0
+title: Graph preflight before governed edit
+summary: Governed code work needs Haft graph evidence before edits.
+intent: Use the fused code/reasoning graph before editing governed files or symbols, then record how that evidence affected the plan.
+problem_context: Non-trivial software engineering work where a task-local MethodPack card can reduce omissions.
+first_useful_move: Call code_context for the intended governed file or symbol before editing.
+expected_output_kinds:
+    - method_run_closeout
+    - verification_evidence
+fit_function_refs:
+    - process_check:method_run_hard_gates
+carrier_refs:
+    - internal/method/builtin.go
+    - .haft/methods/swe-core/graph-preflight-before-governed-edit.yaml
+source_pattern_refs:
+    - fpf:A.10
+    - fpf:A.15
+lifecycle:
+    status: current
+    valid_from: "2026-06-25"
+source_posture:
+    source_kind: methodpack_card
+    source_edition: swe-core@1.0.0
+    normativity: support_carrier_non_normative_fpf
+    authority_boundary: method_cards_route_work_and_closeout_gates; they do not define normative FPF source material, binding decisions, evidence truth, or gate passage
+applies_to:
+    risk_signals:
+        - governed_file
+        - governed_symbol
+        - decision_governed_code
+does_not_apply_to:
+    task_kinds:
+        - mechanical_edit
+        - formatting_only
+hard_gates:
+    - gate_id: graph_preflight_recorded_before_governed_edit
+      gate_kind: graph_evidence
+      check_level: human_review
+      pass_condition: The closeout cites pre-edit code_context plus impact/explore/node/callers/callees evidence and states how it changed file choice, blast-radius assessment, or the implementation plan.
+      required_evidence:
+        - code_context_ref
+        - impact_or_explore_or_node_ref
+        - plan_influence_note
+      waiver:
+        allowed: true
+        requires_reason: true
+soft_gates:
+    - Status-only does not satisfy graph preflight; use code_context and a task-specific traversal.
+procedure:
+    - Call code_context for the intended governed file or symbol before editing.
+    - Narrow with impact, explore, node, callers, or callees for the symbol flow or blast radius.
+    - Record the graph calls and the resulting plan or risk change in method closeout.
+anti_patterns:
+    - Calling only status or search and treating it as graph preflight.
+    - Running graph queries after editing just to satisfy the checklist.
+    - Recording graph evidence without saying how it affected the plan.
+required_evidence:
+    - code_context_ref
+    - impact_or_explore_or_node_ref
+    - plan_influence_note
+waiver:
+    allowed: true
+    requires_reason: true
+priority: 5

@@ -1,0 +1,77 @@
+id: make-illegal-states-unrepresentable
+version: 1.0.0
+title: Make illegal states unrepresentable
+summary: Domain invariants should live in types or canonical data shapes, not only in after-the-fact checks.
+intent: Reduce invalid combinations by representing state with constrained constructors, sum types, typestates, or canonical forms.
+problem_context: Non-trivial software engineering work where a task-local MethodPack card can reduce omissions.
+first_useful_move: Name the invalid state or invalid transition.
+expected_output_kinds:
+    - method_run_closeout
+    - verification_evidence
+fit_function_refs:
+    - process_check:method_run_hard_gates
+carrier_refs:
+    - internal/method/builtin.go
+    - .haft/methods/swe-core/make-illegal-states-unrepresentable.yaml
+source_pattern_refs:
+    - fpf:A.6
+    - fpf:A.17
+lifecycle:
+    status: current
+    valid_from: "2026-06-25"
+source_posture:
+    source_kind: methodpack_card
+    source_edition: swe-core@1.0.0
+    normativity: support_carrier_non_normative_fpf
+    authority_boundary: method_cards_route_work_and_closeout_gates; they do not define normative FPF source material, binding decisions, evidence truth, or gate passage
+applies_to:
+    risk_signals:
+        - state_model
+        - state_machine
+        - invariant
+        - schema_change
+        - domain_model
+        - invalid_state
+does_not_apply_to:
+    task_kinds:
+        - mechanical_edit
+        - formatting_only
+hard_gates:
+    - gate_id: invariant_encoded_in_shape
+      gate_kind: domain_invariant
+      check_level: human_review
+      pass_condition: The closeout names the invariant and shows where the representation makes invalid states impossible or narrower.
+      required_evidence:
+        - diff_ref
+        - review_note
+        - test_ref
+      waiver:
+        allowed: true
+        requires_reason: true
+    - gate_id: single_canonical_state_form
+      gate_kind: domain_model
+      check_level: human_review
+      pass_condition: There is one canonical representation for the domain state at this layer, or the exception is recorded.
+      required_evidence:
+        - diff_ref
+        - review_note
+      waiver:
+        allowed: true
+        requires_reason: true
+soft_gates:
+    - Prefer explicit variants over boolean flag combinations when the domain has named states.
+procedure:
+    - Name the invalid state or invalid transition.
+    - Choose a representation that cannot express it, or narrows where it can enter.
+    - Parse weak boundary data into the strong representation before core logic.
+anti_patterns:
+    - Boolean flag clusters that can express contradictory states.
+    - Runtime validation repeated across call sites instead of a canonical constructor or type.
+required_evidence:
+    - diff_ref
+    - review_note
+    - test_ref
+waiver:
+    allowed: true
+    requires_reason: true
+priority: 40

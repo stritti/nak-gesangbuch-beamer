@@ -12,57 +12,57 @@ export default defineConfig(({ mode }) => {
   base: env.VITE_BASE_PATH || '/',
   plugins: [
     vue(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
-      manifest: {
-        name: 'NAK Gesangbuch Beamer',
-        short_name: 'NAK Beamer',
-        description: 'Beamer-App für NAK-Gesangbuch',
-        theme_color: '#ffffff',
-        icons: [
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
-          }
-        ]
-      },
-      devOptions: {
-        enabled: true
-      },
-      workbox: {
-        runtimeCaching: [
-          {
-            urlPattern: /\/data\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'songs-data',
-              networkTimeoutSeconds: 5,
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 30
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ]
-      }
-    })
+     VitePWA({
+       registerType: 'autoUpdate',
+       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+       manifest: {
+         name: 'NAK Gesangbuch Beamer',
+         short_name: 'NAK Beamer',
+         description: 'Beamer-App für NAK-Gesangbuch',
+         theme_color: '#ffffff',
+         icons: [
+           {
+             src: 'pwa-192x192.png',
+             sizes: '192x192',
+             type: 'image/png',
+             purpose: 'any'
+           },
+           {
+             src: 'pwa-512x512.png',
+             sizes: '512x512',
+             type: 'image/png'
+           },
+           {
+             src: 'pwa-512x512.png',
+             sizes: '512x512',
+             type: 'image/png',
+             purpose: 'any maskable'
+           }
+         ]
+       },
+       devOptions: {
+         enabled: true
+       },
+       workbox: {
+         runtimeCaching: [
+           {
+             urlPattern: /\/data\/.*/i,
+             handler: 'NetworkFirst',
+             options: {
+               cacheName: 'songs-data',
+               networkTimeoutSeconds: 5,
+               expiration: {
+                 maxEntries: 10,
+                 maxAgeSeconds: 60 * 60 * 24 * 30
+               },
+               cacheableResponse: {
+                 statuses: [0, 200]
+               }
+             }
+           }
+         ]
+       }
+     })
   ],
   resolve: {
     alias: {
