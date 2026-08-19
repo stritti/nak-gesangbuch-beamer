@@ -290,13 +290,14 @@ const setProjectorWindow = (type: ProjectorWindowType) => {
   // Speichere die Einstellungen für die nächste Sitzung
   localStorage.setItem('projectorWindowFeatures', features);
 
-  // Schließe ein bestehendes Fenster, damit die neuen Features beim Öffnen angewendet werden
-  projectorWindowManager.getProjectorWindow()?.close();
-
-  projectorWindow.value = projectorWindowManager.openProjectorWindow({
-    songId: route.query.songId as string | undefined,
-    setlistId: route.query.setlistId as string | undefined
-  });
+  // Fenster mit den ausgewählten Features direkt neu öffnen
+  projectorWindow.value = projectorWindowManager.reopenProjectorWindow(
+    {
+      songId: route.query.songId as string | undefined,
+      setlistId: route.query.setlistId as string | undefined
+    },
+    features
+  );
 };
 
 // Event-Listener für Nachrichten vom Projektor-Fenster

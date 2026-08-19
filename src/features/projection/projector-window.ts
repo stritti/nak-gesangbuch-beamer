@@ -75,6 +75,28 @@ class ProjectorWindowManager {
     return this.globalProjectorWindow;
   }
 
+  reopenProjectorWindow(options: { songId?: string; setlistId?: string }, windowFeatures: string): Window | null {
+    const url = buildProjectorUrl(options);
+
+    // Bestehendes Fenster schließen und Referenz löschen
+    if (this.globalProjectorWindow && !this.globalProjectorWindow.closed) {
+      try {
+        this.globalProjectorWindow.close();
+      } catch {
+        // ignorieren
+      }
+    }
+    this.globalProjectorWindow = null;
+
+    // Direkt mit Features öffnen — ohne Feature-loses window.open('', name)-Lookup
+    this.globalProjectorWindow = window.open(url, PROJECTOR_WINDOW_NAME, windowFeatures);
+    if (this.globalProjectorWindow) {
+      localStorage.setItem('projectorWindowOpen', 'true');
+      this.globalProjectorWindow.focus();
+    }
+    return this.globalProjectorWindow;
+  }
+
   sendMessage(windowRef: Window | null, message: unknown): boolean {
     // Reihenfolge wie bisher: explizite Referenz → globale Referenz → gefundenes Fenster.
     // getProjectorWindow() wird nur ausgewertet, wenn beide vorherigen ungültig sind
