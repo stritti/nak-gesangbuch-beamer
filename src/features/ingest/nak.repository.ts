@@ -1,24 +1,15 @@
-import { ref } from 'vue';
 import type { NakDataset } from './nak.types';
 import type { Song } from '@/features/songs/song.types';
 import { transformNakDataset } from './nak.parser';
 import * as idb from '@/utils/idb';
 import { readFileAsText } from '@/utils/file';
 import { getBookName } from '@/features/songs/book-names';
+import { searchSongs } from '@/features/songs/search';
 
 /**
  * Repository für den Import, die Validierung und Persistenz von NAK-Daten
  */
 export class NakRepository {
-  // Reaktive Zustände für UI-Feedback
-  public isImporting = ref(false);
-  public importProgress = ref(0);
-  public importErrors = ref<Array<{ path: string; message: string }>>([]);
-
-  constructor() {
-    // Keine AJV-Initialisierung mehr
-  }
-
   /**
    * Importiert und validiert eine NAK-JSON-Datei
    * @param file Die zu importierende JSON-Datei
@@ -30,94 +21,78 @@ export class NakRepository {
     version: string; 
     errors: Array<{ path: string; message: string }> 
   }> {
-    this.isImporting.value = true;
-    this.importProgress.value = 0;
-    this.importErrors.value = [];
+    // Datei einlesen
+    const content = await readFileAsText(file);
 
+    // JSON parsen
+    let nakData: NakDataset;
     try {
-      // Datei einlesen
-      const content = await readFileAsText(file);
-      this.importProgress.value = 20;
-
-      // JSON parsen
-      let nakData: NakDataset;
-      try {
-        nakData = JSON.parse(content) as NakDataset;
-      } catch (error) {
-        throw new Error(`Die Datei enthält kein gültiges JSON: ${error instanceof Error ? error.message : String(error)}`);
-      }
-      this.importProgress.value = 40;
-
-      // Einfache Validierung ohne AJV
-      if (!nakData.version || !nakData.buecher || !nakData.lieder) {
-        throw new Error('Die Datei enthält nicht die erforderlichen Felder (version, buecher, lieder)');
-      }
-      
-      if (!Array.isArray(nakData.buecher) || !Array.isArray(nakData.lieder)) {
-        throw new Error('Die Felder "buecher" und "lieder" müssen Arrays sein');
-      }
-      
-      // Prüfe, ob die Version mit 5.x.y beginnt
-      if (!/^5\.\d+\.\d+$/.test(nakData.version)) {
-        throw new Error(`Ungültige Version: ${nakData.version} (erwartet: 5.x.y)`);
-      }
-      
-      // Einfache Validierung der ersten paar Lieder (max. 10 Fehler)
-      const errors: Array<{ path: string; message: string }> = [];
-      
-      for (let i = 0; i < Math.min(10, nakData.lieder.length); i++) {
-        const lied = nakData.lieder[i];
-        if (!lied.buchId) {
-          errors.push({ path: `/lieder/${i}`, message: 'Feld "buchId" fehlt' });
-        }
-        if (!lied.nummer) {
-          errors.push({ path: `/lieder/${i}`, message: 'Feld "nummer" fehlt' });
-        }
-        if (!lied.title) {
-          errors.push({ path: `/lieder/${i}`, message: 'Feld "title" fehlt' });
-        }
-        if (!lied.text) {
-          errors.push({ path: `/lieder/${i}`, message: 'Feld "text" fehlt' });
-        }
-        
-        if (errors.length >= 10) break;
-      }
-      
-      if (errors.length > 0) {
-        this.importErrors.value = errors;
-        throw new Error(`Die Datei entspricht nicht dem NAK-Schema (${errors.length} Fehler)`);
-      }
-      
-      this.importProgress.value = 60;
-
-      // Bücher extrahieren und in IndexedDB speichern
-      const books = nakData.buecher.map(book => ({
-        id: book.id,
-        title: book.title || getBookName(book.id),
-        count: book.hymnCount || 0
-      }));
-      
-      // Daten transformieren
-      const songs = transformNakDataset(nakData as NakDataset);
-      this.importProgress.value = 80;
-
-      // In IndexedDB speichern
-      await this.saveSongs(songs);
-      
-      // Bücher in IndexedDB speichern
-      await this.saveBooks(books);
-      
-      this.importProgress.value = 100;
-
-      return {
-        songs,
-        books,
-        version: nakData.version,
-        errors: this.importErrors.value
-      };
-    } finally {
-      this.isImporting.value = false;
+      nakData = JSON.parse(content) as NakDataset;
+    } catch (error) {
+      throw new Error(`Die Datei enthält kein gültiges JSON: ${error instanceof Error ? error.message : String(error)}`);
     }
+
+    // Einfache Validierung ohne AJV
+    if (!nakData.version || !nakData.buecher || !nakData.lieder) {
+      throw new Error('Die Datei enthält nicht die erforderlichen Felder (version, buecher, lieder)');
+    }
+    
+    if (!Array.isArray(nakData.buecher) || !Array.isArray(nakData.lieder)) {
+      throw new Error('Die Felder "buecher" und "lieder" müssen Arrays sein');
+    }
+    
+    // Prüfe, ob die Version mit 5.x.y beginnt
+    if (!/^5\.\d+\.\d+$/.test(nakData.version)) {
+      throw new Error(`Ungültige Version: ${nakData.version} (erwartet: 5.x.y)`);
+    }
+    
+    // Einfache Validierung der ersten paar Lieder (max. 10 Fehler)
+    const errors: Array<{ path: string; message: string }> = [];
+    
+    for (let i = 0; i < Math.min(10, nakData.lieder.length); i++) {
+      const lied = nakData.lieder[i];
+      if (!lied.buchId) {
+        errors.push({ path: `/lieder/${i}`, message: 'Feld "buchId" fehlt' });
+      }
+      if (!lied.nummer) {
+        errors.push({ path: `/lieder/${i}`, message: 'Feld "nummer" fehlt' });
+      }
+      if (!lied.title) {
+        errors.push({ path: `/lieder/${i}`, message: 'Feld "title" fehlt' });
+      }
+      if (!lied.text) {
+        errors.push({ path: `/lieder/${i}`, message: 'Feld "text" fehlt' });
+      }
+      
+      if (errors.length >= 10) break;
+    }
+    
+    if (errors.length > 0) {
+      throw new Error(`Die Datei entspricht nicht dem NAK-Schema (${errors.length} Fehler)`);
+    }
+
+    // Bücher extrahieren und in IndexedDB speichern
+    const books = nakData.buecher.map(book => ({
+      id: book.id,
+      title: book.title || getBookName(book.id),
+      count: book.hymnCount || 0
+    }));
+    
+    // Daten transformieren
+    const songs = transformNakDataset(nakData as NakDataset);
+
+    // In IndexedDB speichern
+    await this.saveSongs(songs);
+    
+    // Bücher in IndexedDB speichern
+    await this.saveBooks(books);
+
+    return {
+      songs,
+      books,
+      version: nakData.version,
+      errors: []
+    };
   }
 
   /**
@@ -158,73 +133,8 @@ export class NakRepository {
     query: string, 
     filters?: { buchId?: string; rubric?: string }
   ): Promise<Song[]> {
-    // Alle Songs aus IndexedDB laden
     const allSongs = await idb.getAll<Song>('songs');
-    
-    // Wenn keine Suchanfrage und keine Filter, alle Songs zurückgeben
-    if (!query.trim() && (!filters || (!filters.buchId && !filters.rubric))) {
-      return this.sortSongsByNumber(allSongs);
-    }
-    
-    // Suchanfrage normalisieren
-    const normalizedQuery = query.trim().toLowerCase();
-    
-    // Filtern nach Suchanfrage und Filtern
-    const filteredSongs = allSongs.filter(song => {
-      // Nach Buch-ID filtern
-      if (filters?.buchId && song.source?.buchId !== filters.buchId) {
-        return false;
-      }
-      
-      // Nach Rubrik filtern
-      if (filters?.rubric && song.source?.rubric !== filters.rubric) {
-        return false;
-      }
-      
-      // Wenn keine Suchanfrage, nur nach Filtern filtern
-      if (!normalizedQuery) {
-        return true;
-      }
-      
-      // Nach Titel suchen
-      if (song.title.toLowerCase().includes(normalizedQuery)) {
-        return true;
-      }
-      
-      // Nach Nummer suchen
-      if (song.number && song.number.includes(normalizedQuery)) {
-        return true;
-      }
-      
-      // Nach Volltext suchen
-      return song.verses.some(verse => 
-        verse.lines.some(line => 
-          line.toLowerCase().includes(normalizedQuery)
-        )
-      );
-    });
-    
-    // Sortiere die gefilterten Ergebnisse
-    return this.sortSongsByNumber(filteredSongs);
-  }
-
-  /**
-   * Sortiert Songs nach Buch-ID und Nummer
-   * @param songs Die zu sortierenden Songs
-   * @returns Sortierte Songs
-   */
-  private sortSongsByNumber(songs: Song[]): Song[] {
-    return [...songs].sort((a, b) => {
-      // Zuerst nach Buch-ID sortieren
-      if (a.source?.buchId !== b.source?.buchId) {
-        return (a.source?.buchId || '').localeCompare(b.source?.buchId || '');
-      }
-      
-      // Dann nach Nummer sortieren (als Zahl, nicht als String)
-      const numA = a.number ? parseInt(a.number, 10) : 0;
-      const numB = b.number ? parseInt(b.number, 10) : 0;
-      return numA - numB;
-    });
+    return searchSongs(allSongs, query, filters);
   }
 
   /**
