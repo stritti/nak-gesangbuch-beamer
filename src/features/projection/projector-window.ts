@@ -75,13 +75,48 @@ class ProjectorWindowManager {
     return this.globalProjectorWindow;
   }
 
+  /**
+   * Findet ein bestehendes Projektorfenster wieder — ohne ein neues zu öffnen.
+   * `window.open('', name)` erzeugt ein `about:blank`-Fenster, wenn keines existiert;
+   * das wird erkannt und wieder geschlossen.
+   */
+  private findExistingProjectorWindow(): Window | null {
+    if (this.globalProjectorWindow && !this.globalProjectorWindow.closed) {
+      try {
+        void this.globalProjectorWindow.location.href;
+        return this.globalProjectorWindow;
+      } catch {
+        this.globalProjectorWindow = null;
+      }
+    }
+
+    try {
+      const candidate = window.open('', PROJECTOR_WINDOW_NAME);
+      if (candidate && !candidate.closed) {
+        if (candidate.location.href === 'about:blank') {
+          // Neu erzeugtes leeres Fenster — kein bestehendes Projektorfenster
+          candidate.close();
+          return null;
+        }
+        this.globalProjectorWindow = candidate;
+        return candidate;
+      }
+    } catch {
+      // Fenster nicht zugreifbar
+    }
+    return null;
+  }
+
   reopenProjectorWindow(options: { songId?: string; setlistId?: string }, windowFeatures: string): Window | null {
     const url = buildProjectorUrl(options);
 
-    // Bestehendes Fenster schließen und Referenz löschen
-    if (this.globalProjectorWindow && !this.globalProjectorWindow.closed) {
+    // Bestehendes Fenster schließen — auch nach Reload wiederfinden (globalProjectorWindow === null),
+    // damit window.open(url, name, features) ein neues Fenster mit den Features erzeugt
+    // und kein bestehendes ohne Features recycelt.
+    const existing = this.findExistingProjectorWindow();
+    if (existing) {
       try {
-        this.globalProjectorWindow.close();
+        existing.close();
       } catch {
         // ignorieren
       }
@@ -98,12 +133,11 @@ class ProjectorWindowManager {
   }
 
   sendMessage(windowRef: Window | null, message: unknown): boolean {
-    // Reihenfolge wie bisher: explizite Referenz → globale Referenz → gefundenes Fenster.
-    // getProjectorWindow() wird nur ausgewertet, wenn beide vorherigen ungültig sind
-    // (verhindert ungewolltes Öffnen eines neuen Fensters).
+    // Reihenfolge: explizite Referenz → globale Referenz → wiederentdecktes Fenster.
+    // Es wird NIE ein neues Fenster geöffnet — ohne offenes Projektorfenster wird false zurückgegeben.
     const candidates: Array<Window | null> = [windowRef, this.globalProjectorWindow];
     if ((!windowRef || windowRef.closed) && (!this.globalProjectorWindow || this.globalProjectorWindow.closed)) {
-      candidates.push(this.getProjectorWindow());
+      candidates.push(this.findExistingProjectorWindow());
     }
 
     for (const win of candidates) {
@@ -118,69 +152,6 @@ class ProjectorWindowManager {
       }
     }
     return false;
-  }
-
-  isProjectorOpen(): boolean {
-    if (this.globalProjectorWindow && !this.globalProjectorWindow.closed) {
-      try {
-        void this.globalProjectorWindow.location.href;
-        return true;
-      } catch {
-        this.globalProjectorWindow = null;
-        localStorage.removeItem('projectorWindowOpen');
-        return false;
-      }
-    }
-
-    try {
-      const projectorWindow = window.open('', PROJECTOR_WINDOW_NAME);
-      if (projectorWindow && !projectorWindow.closed) {
-        void projectorWindow.location.href;
-        this.globalProjectorWindow = projectorWindow;
-        return true;
-      }
-    } catch {
-      // Fenster nicht zugreifbar
-    }
-
-    localStorage.removeItem('projectorWindowOpen');
-    return false;
-  }
-
-  getProjectorWindow(): Window | null {
-    if (this.globalProjectorWindow && !this.globalProjectorWindow.closed) {
-      try {
-        void this.globalProjectorWindow.location.href;
-        this.globalProjectorWindow.focus();
-        return this.globalProjectorWindow;
-      } catch {
-        this.globalProjectorWindow = null;
-      }
-    }
-
-    try {
-      const existingWindow = window.open('', PROJECTOR_WINDOW_NAME);
-      if (existingWindow && !existingWindow.closed) {
-        void existingWindow.location.href;
-        this.globalProjectorWindow = existingWindow;
-        this.globalProjectorWindow.focus();
-        return this.globalProjectorWindow;
-      }
-    } catch {
-      // Fenster nicht zugreifbar — neues Fenster öffnen
-    }
-
-    const windowFeatures = localStorage.getItem('projectorWindowFeatures') || DEFAULT_WINDOW_FEATURES;
-    this.globalProjectorWindow = window.open(
-      `${import.meta.env.BASE_URL}projector`,
-      PROJECTOR_WINDOW_NAME,
-      windowFeatures
-    );
-    if (this.globalProjectorWindow) {
-      localStorage.setItem('projectorWindowOpen', 'true');
-      this.globalProjectorWindow.focus();
-    }
-    return this.globalProjectorWindow;
   }
 
   projectSong(songId: string): Window | null {
