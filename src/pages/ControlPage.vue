@@ -190,7 +190,8 @@ import { useSetlistStore } from '@/features/setlist/setlist.store';
 import ControlPanel from '@/components/ControlPanel.vue';
 import HotkeyLegend from '@/components/HotkeyLegend.vue';
 import { Song } from '@/features/songs/song.types';
-import { isProjectorOpen, getProjectorWindow } from '@/utils/projection';
+import { projectorWindowManager, getWindowFeatures } from '@/features/projection/projector-window';
+import type { ProjectorWindowType } from '@/features/projection/projector-window';
 import { buildSlides } from '@/features/projection/slides';
 
 const route = useRoute();
@@ -233,68 +234,15 @@ const totalSlides = computed(() => slides.value.length);
 
 // Methoden zur Steuerung der Projektion
 const openProjector = () => {
-  // Öffne ein Fenster mit der Projektor-Seite oder aktualisiere das bestehende
-  const songId = route.query.songId as string | undefined;
-  const setlistId = route.query.setlistId as string | undefined;
-  
-  // Prüfe, ob bereits ein Projektorfenster existiert
-  const isOpen = isProjectorOpen();
-  
-  // Verwende den gespeicherten Fensterstil oder den Standard
-  const windowFeatures = localStorage.getItem('projectorWindowFeatures') || 'width=1024,height=768';
-  
-  // Erstelle die URL basierend auf den Parametern
-  let url = `${import.meta.env.BASE_URL}projector`;
-  const params = new URLSearchParams();
-  
-  if (songId) {
-    params.append('songId', songId);
-  } else if (setlistId) {
-    params.append('setlistId', setlistId);
-  }
-  
-  if (params.toString()) {
-    url += '?' + params.toString();
-  }
-  
-  // Versuche, ein existierendes Fenster zu finden oder ein neues zu öffnen
-  if (isOpen) {
-    // Wenn ein Fenster bereits existiert, aktualisiere es
-    const existingWindow = getProjectorWindow();
-    if (existingWindow) {
-      existingWindow.location.href = url;
-      existingWindow.focus();
-      projectorWindow.value = existingWindow;
-    } else {
-      // Falls wir keine Referenz haben, aber isOpen true ist, öffne ein neues Fenster
-      projectorWindow.value = window.open(url, 'projector', windowFeatures);
-    }
-  } else {
-    // Öffne ein neues Fenster
-    projectorWindow.value = window.open(url, 'projector', windowFeatures);
-  }
-  
-  // Wenn das Fenster neu geöffnet wurde, zeige eine Meldung an
-  if (!isOpen && projectorWindow.value) {
-    console.log('Projektor wurde geöffnet.');
-  } else if (projectorWindow.value) {
-    console.log('Projektor wurde aktualisiert.');
-  }
+  projectorWindow.value = projectorWindowManager.openProjectorWindow({
+    songId: route.query.songId as string | undefined,
+    setlistId: route.query.setlistId as string | undefined
+  });
 };
 
 // Hilfsfunktion: Nachricht an den Projektor senden
 const sendToProjector = (message: unknown): boolean => {
-  const win = projectorWindow.value;
-  if (win && !win.closed) {
-    try {
-      win.postMessage(message, window.location.origin);
-      return true;
-    } catch (error) {
-      console.error('Fehler beim Senden der Nachricht an den Projektor:', error);
-      projectorWindow.value = null;
-    }
-  }
-  return false;
+  return projectorWindowManager.sendMessage(projectorWindow.value, message);
 };
 
 const handleNext = () => {
@@ -332,60 +280,24 @@ const handlePrevSong = () => {
 };
 
 // Projektor-Fenster-Einstellungen
-const setProjectorWindow = (type: 'primary' | 'secondary' | 'fullscreen' | 'custom') => {
-  let windowFeatures = '';
-  
-  switch (type) {
-    case 'primary':
-      // Standardfenster auf dem Hauptbildschirm
-      windowFeatures = 'width=1024,height=768';
-      break;
-    case 'secondary':
-      // Fenster auf dem zweiten Bildschirm (angenommen, der Hauptbildschirm ist 1920px breit)
-      windowFeatures = 'width=1024,height=768,left=1920,top=0';
-      break;
-    case 'fullscreen':
-      // Vollbild-Fenster (maximiert)
-      windowFeatures = 'width=' + window.screen.width + ',height=' + window.screen.height + ',top=0,left=0';
-      break;
-    case 'custom':
-      // Benutzerdefinierte Einstellung - hier könnte ein Dialog geöffnet werden
-      // Für jetzt verwenden wir eine einfache Eingabe
-      const width = prompt('Breite des Fensters:', '1024') || '1024';
-      const height = prompt('Höhe des Fensters:', '768') || '768';
-      const left = prompt('Position von links:', '0') || '0';
-      const top = prompt('Position von oben:', '0') || '0';
-      windowFeatures = `width=${width},height=${height},left=${left},top=${top}`;
-      break;
-  }
-  
+const setProjectorWindow = (type: ProjectorWindowType) => {
+  const features =
+    type === 'custom'
+      ? prompt('Fenster-Features (z.B. width=1024,height=768,left=0,top=0):', 'width=1024,height=768,left=0,top=0') ||
+        'width=1024,height=768'
+      : getWindowFeatures(type, { width: window.screen.width, height: window.screen.height });
+
   // Speichere die Einstellungen für die nächste Sitzung
-  localStorage.setItem('projectorWindowFeatures', windowFeatures);
-  
-  // Prüfe, ob bereits ein Projektorfenster existiert
-  const isOpen = isProjectorOpen();
-  
-  if (isOpen) {
-    // Wenn ein Projektor-Fenster bereits geöffnet ist, aktualisiere es mit den neuen Einstellungen
-    const existingWindow = getProjectorWindow();
-    if (existingWindow) {
-      // Speichere die aktuelle URL
-      const url = existingWindow.location.href;
-      
-      // Schließe das aktuelle Fenster
-      existingWindow.close();
-      
-      // Öffne ein neues Fenster mit den aktualisierten Einstellungen
-      projectorWindow.value = window.open(url, 'projector', windowFeatures);
-      
-      if (projectorWindow.value) {
-        projectorWindow.value.focus();
-      }
-    }
-  } else {
-    // Falls kein Fenster offen ist, öffne ein neues mit den Standardparametern
-    openProjector();
-  }
+  localStorage.setItem('projectorWindowFeatures', features);
+
+  // Fenster mit den ausgewählten Features direkt neu öffnen
+  projectorWindow.value = projectorWindowManager.reopenProjectorWindow(
+    {
+      songId: route.query.songId as string | undefined,
+      setlistId: route.query.setlistId as string | undefined
+    },
+    features
+  );
 };
 
 // Event-Listener für Nachrichten vom Projektor-Fenster

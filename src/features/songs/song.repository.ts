@@ -1,4 +1,4 @@
-import { Song } from './song.types';
+import type { Song } from './song.types';
 import { readFileAsText } from '@/utils/file';
 import * as idb from '@/utils/idb';
 // JSON Schema Validator
@@ -6,6 +6,7 @@ import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import songSchema from './song.schema.json';
 import { transformNAKSongs } from '@/utils/nakTransformer';
+import { searchSongs } from './search';
 
 // Initialisiere JSON Schema Validator mit angepassten Optionen
 const ajv = new Ajv({
@@ -15,6 +16,12 @@ const ajv = new Ajv({
 });
 addFormats(ajv);
 const validateSong = ajv.compile(songSchema);
+
+/** Ergebnis eines Lade-/Import-Vorgangs: gültige Lieder plus Fehler pro Datei */
+export interface SongLoadResult {
+  valid: Song[];
+  invalid: { file: string; errors: string[] }[];
+}
 
 /**
  * Song Repository - Verantwortlich für Import, Validierung, Persistenz und Suche von Liedern
@@ -30,62 +37,31 @@ export class SongRepository {
   /**
    * Lädt Lieder aus dem konfigurierten Datenpfad
    */
-  async loadSongsFromDataPath(): Promise<{ valid: Song[]; invalid: { file: string; errors: string[] }[] }> {
-    try {
-      // Versuche zuerst, die NAK-Gesangbuch-Datei zu laden
+  async loadSongsFromDataPath(): Promise<SongLoadResult> {
+    const sources: Array<{ file: string; transform?: (data: unknown) => Song[] }> = [
+      { file: 'nakbuch_v5.4.0.json', transform: transformNAKSongs },
+      { file: 'songs.json' }
+    ];
+    for (const { file, transform } of sources) {
       try {
-        console.log(`Versuche NAK-Gesangbuch zu laden von: ${this.songsDataPath}/nakbuch_v5.4.0.json`);
-        const nakResponse = await fetch(`${this.songsDataPath}/nakbuch_v5.4.0.json`);
-        if (nakResponse.ok) {
-          console.log('NAK-Gesangbuch-Datei erfolgreich geladen');
-          const nakData = await nakResponse.json();
-          console.log('NAK-Gesangbuch-Daten erfolgreich geparst');
-          
-          try {
-            // Transformiere die NAK-Daten in unser Format
-            const transformedSongs = transformNAKSongs(nakData);
-            
-            if (transformedSongs.length > 0) {
-              console.log(`${transformedSongs.length} Lieder aus NAK-Gesangbuch geladen`);
-              // Validiere die transformierten Lieder
-              return this.validateSongs(transformedSongs, 'nakbuch_v5.4.0.json');
-            } else {
-              console.warn('Keine Lieder im NAK-Gesangbuch gefunden');
-            }
-          } catch (transformError) {
-            console.error('Fehler beim Transformieren der NAK-Daten:', transformError);
-          }
-        } else {
-          console.warn(`NAK-Gesangbuch konnte nicht geladen werden: ${nakResponse.status} ${nakResponse.statusText}`);
-        }
-      } catch (nakError) {
-        console.warn('NAK-Gesangbuch konnte nicht geladen werden, versuche Standard-Datei:', nakError);
+        const response = await fetch(`${this.songsDataPath}/${file}`);
+        if (!response.ok) continue;
+        const data = await response.json();
+        const songs = transform ? transform(data) : data;
+        const result = this.validateSongs(songs, file);
+        if (result.valid.length > 0) return result;
+      } catch (error) {
+        console.warn(`Konnte ${file} nicht laden:`, error);
       }
-      
-      // Fallback: Versuche die Standard-Datei zu laden
-      const response = await fetch(`${this.songsDataPath}/songs.json`);
-      if (!response.ok) {
-        throw new Error(`Fehler beim Laden der Lieder: ${response.statusText}`);
-      }
-      
-      const songsData = await response.json();
-      
-      // Validiere die geladenen Lieder
-      return this.validateSongs(songsData, 'songs.json');
-    } catch (error) {
-      console.error('Fehler beim Laden der Lieder aus dem Datenpfad:', error);
-      return { valid: [], invalid: [{ file: 'songs.json', errors: [(error as Error).message] }] };
     }
+    return { valid: [], invalid: [{ file: 'songs.json', errors: ['Keine Lieder aus dem Datenpfad geladen'] }] };
   }
 
   /**
    * Validiert ein Array von Liedern gegen das Schema
    */
-  private validateSongs(songs: unknown[], filename: string): { valid: Song[]; invalid: { file: string; errors: string[] }[] } {
-    const result: { valid: Song[]; invalid: { file: string; errors: string[] }[] } = {
-      valid: [],
-      invalid: []
-    };
+  private validateSongs(songs: unknown[], filename: string): SongLoadResult {
+    const result: SongLoadResult = { valid: [], invalid: [] };
 
     // Wenn songs kein Array ist, behandle es als Fehler
     if (!Array.isArray(songs)) {
@@ -98,42 +74,27 @@ export class SongRepository {
 
     // Validiere jedes Lied
     for (const song of songs) {
-      try {
-        // Grundlegende Validierung ohne Schema
-        if (!this.isBasicSongValid(song)) {
-          result.invalid.push({
-            file: filename,
-            errors: ['Lied fehlt erforderliche Felder (id, title, verses)']
-          });
-          continue;
-        }
+      // Grundlegende Validierung ohne Schema
+      if (!this.isBasicSongValid(song)) {
+        result.invalid.push({
+          file: filename,
+          errors: ['Lied fehlt erforderliche Felder (id, title, verses)']
+        });
+        continue;
+      }
 
-        // Versuche Schema-Validierung
-        const isValid = validateSong(song);
-        if (isValid) {
-          result.valid.push(song as unknown as Song);
-        } else {
-          const errors = validateSong.errors?.map(err => 
-            `${err.instancePath} ${err.message}`
-          ) || ['Unbekannter Validierungsfehler'];
-          
-          result.invalid.push({
-            file: filename,
-            errors: errors.slice(0, 5) // Maximal 5 Fehler anzeigen
-          });
-        }
-      } catch (error) {
-        // Fallback bei Validierungsfehlern
-        console.error('Fehler bei der Validierung:', error);
-        if (this.isBasicSongValid(song)) {
-          // Wenn grundlegende Validierung erfolgreich, akzeptiere das Lied trotzdem
-          result.valid.push(song as unknown as Song);
-        } else {
-          result.invalid.push({
-            file: filename,
-            errors: [(error as Error).message]
-          });
-        }
+      // Schema-Validierung
+      if (validateSong(song)) {
+        result.valid.push(song as unknown as Song);
+      } else {
+        const errors = validateSong.errors?.map(err => 
+          `${err.instancePath} ${err.message}`
+        ) || ['Unbekannter Validierungsfehler'];
+        
+        result.invalid.push({
+          file: filename,
+          errors: errors.slice(0, 5) // Maximal 5 Fehler anzeigen
+        });
       }
     }
 
@@ -170,8 +131,8 @@ export class SongRepository {
   /**
    * Importiert Lieder aus JSON-Dateien
    */
-  async importSongs(files: File[]): Promise<{ valid: Song[]; invalid: { file: string; errors: string[] }[] }> {
-    const result: { valid: Song[]; invalid: { file: string; errors: string[] }[] } = {
+  async importSongs(files: File[]): Promise<SongLoadResult> {
+    const result: SongLoadResult = {
       valid: [],
       invalid: []
     };
@@ -222,58 +183,7 @@ export class SongRepository {
    * Sucht nach Liedern basierend auf Suchbegriff
    */
   async searchSongs(query: string): Promise<Song[]> {
-    if (!query.trim()) {
-      return this.getAllSongs();
-    }
-    
-    try {
-      // Alle Lieder laden
-      const allSongs = await this.getAllSongs();
-      
-      // Suchbegriff normalisieren
-      const normalizedQuery = query.toLowerCase().trim();
-      
-      // Fuzzy-Suche implementieren
-      return allSongs.filter(song => {
-        // Suche in Titel
-        if (song.title.toLowerCase().includes(normalizedQuery)) {
-          return true;
-        }
-        
-        // Suche in Nummer
-        if (song.number && song.number.includes(normalizedQuery)) {
-          return true;
-        }
-        
-        // Suche in Themen
-        if (song.topics && song.topics.some(topic => 
-          topic.toLowerCase().includes(normalizedQuery)
-        )) {
-          return true;
-        }
-        
-        // Suche in Versen (Volltext)
-        if (song.verses.some(verse => 
-          verse.lines.some(line => 
-            line.toLowerCase().includes(normalizedQuery)
-          )
-        )) {
-          return true;
-        }
-        
-        // Suche im Refrain
-        if (song.refrain && song.refrain.lines.some(line => 
-          line.toLowerCase().includes(normalizedQuery)
-        )) {
-          return true;
-        }
-        
-        return false;
-      });
-    } catch (error) {
-      console.error('Fehler bei der Suche:', error);
-      return [];
-    }
+    return searchSongs(await this.getAllSongs(), query);
   }
 
   /**

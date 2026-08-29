@@ -39,7 +39,6 @@
         <transition 
           name="slide-fade" 
           mode="out-in"
-          @before-enter="beforeEnter"
           @after-leave="afterLeave"
           @after-enter="adjustFontSize"
         >
@@ -85,7 +84,7 @@
         v-for="(verseNum, idx) in extractedVerseNumbers" 
         :key="verseNum"
         class="verse-number px-2 py-1 rounded-full text-sm"
-        :class="{ 'active': idx === currentVerseIndex }"
+        :class="{ 'active': idx === props.currentIndex }"
         @click="jumpToVerse(idx)"
         :title="`Zu Strophe ${verseNum} springen`"
       >
@@ -155,26 +154,17 @@ const extractedVerseNumbers = computed(() => {
   return Array.from({ length: props.slides.length }, (_, i) => String(i + 1));
 });
 
-// Der aktuelle Strophenindex ist jetzt direkt der currentIndex,
-// da jede Strophe genau einem Slide entspricht
-const currentVerseIndex = computed(() => {
-  return props.currentIndex;
-});
-
 // Aktuelle Strophennummer für die Anzeige
 const currentVerseNumber = computed(() => {
-  if (extractedVerseNumbers.value.length === 0 || currentVerseIndex.value >= extractedVerseNumbers.value.length) {
+  if (extractedVerseNumbers.value.length === 0 || props.currentIndex >= extractedVerseNumbers.value.length) {
     return null;
   }
-  return extractedVerseNumbers.value[currentVerseIndex.value];
+  return extractedVerseNumbers.value[props.currentIndex];
 });
 
 // Computed
 const currentSlide = computed(() => {
   if (!props.slides.length) return null;
-  
-  // Wenn keine Slides vorhanden sind, leeren Array zurückgeben
-  if (props.slides.length === 0) return null;
   
   // Sicherstellen, dass der Index im gültigen Bereich liegt
   const index = Math.min(props.currentIndex, props.slides.length - 1);
@@ -189,9 +179,6 @@ const adjustFontSize = async () => {
   
   // Warten auf das nächste Rendering und sicherstellen, dass der DOM aktualisiert ist
   await nextTick();
-  
-  // Logging für Debugging
-  console.log('Adjusting font size for slide:', props.currentIndex);
   
   // Reserviere Platz für Header (oben) und Navigation/Footer (unten)
   const headerSpace = 100; // Platz für Liedtitel und Nummer
@@ -337,13 +324,6 @@ const handleMessage = (event: MessageEvent) => {
             }
           });
         break;
-      
-      case 'updateSlides':
-        // Hier könnten wir Slides aktualisieren, wenn sie vom Steuerungsfenster gesendet werden
-        if (event.data.slides) {
-          console.log('Slides aktualisiert:', event.data.slides);
-        }
-        break;
     }
   }
 };
@@ -433,10 +413,6 @@ const handleResize = () => {
 };
 
 // Animation-Hooks
-const beforeEnter = () => {
-  // Hier könnten wir zusätzliche Logik vor dem Einblenden hinzufügen
-};
-
 const afterLeave = () => {
   // Nach dem Ausblenden die Schriftgröße anpassen
   setTimeout(() => {

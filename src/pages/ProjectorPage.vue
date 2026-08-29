@@ -49,71 +49,37 @@ const prepareSlides = (song: Song | null) => {
   slides.value = buildSlides(song);
 
   // Informiere das Steuerungsfenster über die Anzahl der Slides
-  if (window.opener) {
-    window.opener.postMessage({
-      type: 'slidesUpdated',
-      totalSlides: slides.value.length,
-      currentSongId: song?.id
-    }, window.location.origin);
-  }
+  notifyOpener('slidesUpdated', { totalSlides: slides.value.length, currentSongId: song?.id });
 };
 
 // Zustand für Setlist-Navigation
 const currentSetlistIndex = ref(0);
 const setlistItems = ref<Array<{songId: string, verseIds?: string[]}>>([]);
 
+// Benachrichtigt das Steuerungsfenster (opener) über Zustandsänderungen
+const notifyOpener = (type: string, data: Record<string, unknown> = {}) => {
+  if (window.opener) {
+    window.opener.postMessage({ type, ...data }, window.location.origin);
+  }
+};
+
 // Funktionen für die Setlist-Navigation
-const nextSong = () => {
-  if (setlistItems.value.length === 0 || currentSetlistIndex.value >= setlistItems.value.length - 1) {
-    return;
-  }
-
-  currentSetlistIndex.value++;
-  const nextItem = setlistItems.value[currentSetlistIndex.value];
-  const song = songStore.getSongById(nextItem.songId);
-
-  if (song) {
-    // Setze den Projektor zurück und lade das nächste Lied
-    projectionStore.reset();
-    prepareSlides(song);
-  
-    // Informiere das Steuerungsfenster über den Wechsel
-    if (window.opener) {
-      window.opener.postMessage({
-        type: 'setlistItemChanged',
-        currentIndex: currentSetlistIndex.value,
-        totalItems: setlistItems.value.length,
-        currentSongId: song.id
-      }, window.location.origin);
-    }
-  }
+const navigateToSong = (index: number) => {
+  if (index < 0 || index >= setlistItems.value.length) return;
+  currentSetlistIndex.value = index;
+  const song = songStore.getSongById(setlistItems.value[index].songId);
+  if (!song) return;
+  projectionStore.reset();
+  prepareSlides(song);
+  notifyOpener('setlistItemChanged', {
+    currentIndex: index,
+    totalItems: setlistItems.value.length,
+    currentSongId: song.id
+  });
 };
 
-const prevSong = () => {
-  if (setlistItems.value.length === 0 || currentSetlistIndex.value <= 0) {
-    return;
-  }
-
-  currentSetlistIndex.value--;
-  const prevItem = setlistItems.value[currentSetlistIndex.value];
-  const song = songStore.getSongById(prevItem.songId);
-
-  if (song) {
-    // Setze den Projektor zurück und lade das vorherige Lied
-    projectionStore.reset();
-    prepareSlides(song);
-  
-    // Informiere das Steuerungsfenster über den Wechsel
-    if (window.opener) {
-      window.opener.postMessage({
-        type: 'setlistItemChanged',
-        currentIndex: currentSetlistIndex.value,
-        totalItems: setlistItems.value.length,
-        currentSongId: song.id
-      }, window.location.origin);
-    }
-  }
-};
+const nextSong = () => navigateToSong(currentSetlistIndex.value + 1);
+const prevSong = () => navigateToSong(currentSetlistIndex.value - 1);
 
 // Event-Listener für Nachrichten vom Steuerungsfenster
 const handleMessage = (event: MessageEvent) => {
@@ -124,18 +90,15 @@ const handleMessage = (event: MessageEvent) => {
     switch (event.data.type) {
       case 'requestState':
         // Sende den aktuellen Zustand zurück
-        if (window.opener) {
-          window.opener.postMessage({
-            type: 'projectorState',
-            isFullscreen: document.fullscreenElement !== null,
-            currentIndex: projectionStore.currentIndex,
-            totalSlides: slides.value.length,
-            currentSongId: currentSong.value?.id,
-            inSetlist: setlistItems.value.length > 0,
-            currentSetlistIndex: currentSetlistIndex.value,
-            totalSetlistItems: setlistItems.value.length
-          }, window.location.origin);
-        }
+        notifyOpener('projectorState', {
+          isFullscreen: document.fullscreenElement !== null,
+          currentIndex: projectionStore.currentIndex,
+          totalSlides: slides.value.length,
+          currentSongId: currentSong.value?.id,
+          inSetlist: setlistItems.value.length > 0,
+          currentSetlistIndex: currentSetlistIndex.value,
+          totalSetlistItems: setlistItems.value.length
+        });
         break;
       
       case 'nextSlide':
@@ -244,7 +207,7 @@ const checkIfInOwnWindow = () => {
       window.close();
     } catch (e) {
       // Falls das Schließen nicht funktioniert, leiten wir zur Startseite weiter
-      window.location.href = '/';
+      window.location.href = import.meta.env.BASE_URL;
     }
     
     return false;
@@ -258,16 +221,11 @@ const checkIfInOwnWindow = () => {
 
 // Zur Startseite navigieren
 const navigateHome = () => {
-  // Fenster schließen oder zur Startseite navigieren
-  if (window.opener) {
-    // Informiere das Steuerungsfenster, dass wir zur Startseite navigieren
-    window.opener.postMessage({
-      type: 'navigatingHome'
-    }, window.location.origin);
-  }
-  
+  // Informiere das Steuerungsfenster, dass wir zur Startseite navigieren
+  notifyOpener('navigatingHome');
+
   // Zur Startseite navigieren
-  window.location.href = '/';
+  window.location.href = import.meta.env.BASE_URL;
 };
 
 // Lade das Lied basierend auf der URL oder der Setlist
@@ -307,13 +265,7 @@ onMounted(async () => {
       }
       
       // Informiere das Steuerungsfenster über die geladene Setlist
-      if (window.opener) {
-        window.opener.postMessage({
-          type: 'setlistLoaded',
-          setlistId,
-          totalItems: setlist.items.length
-        }, window.location.origin);
-      }
+      notifyOpener('setlistLoaded', { setlistId, totalItems: setlist.items.length });
       
       return; // Wir haben eine Setlist geladen, also nicht weiter nach einzelnen Liedern suchen
     }
@@ -349,16 +301,13 @@ onMounted(async () => {
   window.addEventListener('message', handleMessage);
   
   // Informiere das Steuerungsfenster, dass der Projektor bereit ist
-  if (window.opener) {
-    window.opener.postMessage({
-      type: 'projectorReady',
-      songId: currentSong.value?.id,
-      totalSlides: slides.value.length,
-      inSetlist: setlistItems.value.length > 0,
-      currentSetlistIndex: currentSetlistIndex.value,
-      totalSetlistItems: setlistItems.value.length
-    }, window.location.origin);
-  }
+  notifyOpener('projectorReady', {
+    songId: currentSong.value?.id,
+    totalSlides: slides.value.length,
+    inSetlist: setlistItems.value.length > 0,
+    currentSetlistIndex: currentSetlistIndex.value,
+    totalSetlistItems: setlistItems.value.length
+  });
   
   // Registriere dieses Fenster als das aktive Projektorfenster
   window.name = 'projector';
@@ -404,15 +353,6 @@ watch(() => projectionStore.maxLinesPerSlide, () => {
 
 // Benachrichtige das Steuerungsfenster, wenn sich der Slide-Index ändert
 watch(() => projectionStore.currentIndex, (newIndex) => {
-  if (!window.opener) return;
-  try {
-    window.opener.postMessage({
-      type: 'slideChanged',
-      currentIndex: newIndex,
-      totalSlides: slides.value.length
-    }, window.location.origin);
-  } catch {
-    // Opener ist nicht zugreifbar oder nicht same-origin; keine Nachricht senden
-  }
+  notifyOpener('slideChanged', { currentIndex: newIndex, totalSlides: slides.value.length });
 });
 </script>

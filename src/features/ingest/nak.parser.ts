@@ -2,11 +2,6 @@ import type { NakDataset, NakLied, NakBook } from './nak.types';
 import type { Song, Verse } from '@/features/songs/song.types';
 
 /**
- * Formatiert eine Nummer als String, optional mit führenden Nullen
- */
-const ID_PAD = (n: number) => String(n); // bei Bedarf: n.toString().padStart(3,'0')
-
-/**
  * Parst den Liedtext in einzelne Strophen und Zeilen
  * @param text Volltext des Liedes mit Strophen und "/"-Zeilentrennern
  * @returns Array von Verse-Objekten mit id und lines
@@ -46,7 +41,7 @@ export function mapNakToSong(nak: NakLied, books: Record<string, NakBook>): Song
   const rubric = book?.rubrics?.find(r => r.index === nak.rubricIndex)?.title;
   
   return {
-    id: `${nak.buchId}-${ID_PAD(nak.nummer)}`,
+    id: `${nak.buchId}-${String(nak.nummer)}`,
     number: String(nak.nummer),
     title: nak.title,
     verses: parseTextToVerses(nak.text),
