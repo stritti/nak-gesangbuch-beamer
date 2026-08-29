@@ -21,7 +21,7 @@
     "pinia": "^4.0.3",
     "pinia-plugin-persistedstate": "^4.7.1",
     "vue": "^3.5.41",
-    "vue-router": "^4.5.1"
+    "vue-router": "^5.2.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",
