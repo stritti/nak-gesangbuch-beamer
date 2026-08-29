@@ -15,6 +15,14 @@ updates:
       prefix-development: "chore(deps-dev)"
     labels:
       - "dependencies"
+    # Major upgrades frequently require coordinated migrations (for example
+    # ESLint + typescript-eslint, Tailwind or TypeScript). Keep Dependabot
+    # focused on independently verifiable maintenance updates; majors are
+    # handled deliberately as migration PRs.
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
     groups:
       production-dependencies:
         dependency-type: "production"
@@ -40,6 +48,12 @@ updates:
       prefix: "chore(deps)"
     labels:
       - "dependencies"
+    # Keep action majors explicit as well; they can change runtime semantics
+    # and permission requirements.
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
     groups:
       actions:
         patterns:
