@@ -426,6 +426,8 @@ watch(() => projectionStore.theme, (val) => {
 </script>
 
 <style scoped>
+@reference "../styles/tailwind.css";
+
 .preview-screen.high-contrast {
   @apply bg-black text-white;
 }
