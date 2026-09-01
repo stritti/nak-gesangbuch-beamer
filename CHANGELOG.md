@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/stritti/nak-gesangbuch-beamer/compare/nak-gesangbuch-beamer-v0.2.0...nak-gesangbuch-beamer-v0.3.0) (2026-09-01)
+
+
+### Features
+
+* Dashboard-Startseite mit Steuerung, Bibliothek und Setlist ([f3601d0](https://github.com/stritti/nak-gesangbuch-beamer/commit/f3601d001dbc240841372955c5763b46bd4dee67))
+
 ## [0.2.0](https://github.com/stritti/nak-gesangbuch-beamer/compare/nak-gesangbuch-beamer-v0.1.0...nak-gesangbuch-beamer-v0.2.0) (2026-08-29)
 
 
