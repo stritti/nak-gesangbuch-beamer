@@ -96,13 +96,13 @@
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import { useSetlistStore } from '@/features/setlist/setlist.store';
 import { useSongStore } from '@/features/songs/song.store';
 import { saveAsFile, pickFiles, readFileAsText } from '@/utils/file';
 import SetlistItem from '@/components/SetlistItem.vue';
+import { projectorWindowManager } from '@/features/projection/projector-window';
 
-const router = useRouter();
+// Stores
 const setlistStore = useSetlistStore();
 const songStore = useSongStore();
 
@@ -188,7 +188,7 @@ const startProjection = () => {
     return;
   }
   
-  router.push('/projector');
+  projectorWindowManager.openProjectorWindow({ setlistId: currentSetlist.value.id });
 };
 
 // Hilfsfunktion zum Abrufen eines Liedes anhand seiner ID

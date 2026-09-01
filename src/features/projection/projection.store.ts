@@ -8,6 +8,7 @@ interface ProjectionState {
   lineHeight: number;     // z.B. 1.3
   theme: 'light' | 'dark' | 'high-contrast';
   maxLinesPerSlide: number;
+  placeholderText: string; // Text bei leerem Slide
 }
 
 export const useProjectionStore = defineStore('projection', {
@@ -18,7 +19,8 @@ export const useProjectionStore = defineStore('projection', {
     fontSize: 80,
     lineHeight: 1.3,
     theme: 'high-contrast',
-    maxLinesPerSlide: 4
+    maxLinesPerSlide: 4,
+    placeholderText: ''
   }),
   
   actions: {
@@ -54,6 +56,10 @@ export const useProjectionStore = defineStore('projection', {
       this.maxLinesPerSlide = lines;
     },
     
+    setPlaceholderText(text: string) {
+      this.placeholderText = text;
+    },
+    
     reset() {
       this.currentIndex = 0;
       this.blackout = false;
@@ -61,6 +67,6 @@ export const useProjectionStore = defineStore('projection', {
   },
   
   persist: {
-    pick: ['fontSize', 'lineHeight', 'theme', 'maxLinesPerSlide']
+    pick: ['fontSize', 'lineHeight', 'theme', 'maxLinesPerSlide', 'placeholderText']
   }
 });

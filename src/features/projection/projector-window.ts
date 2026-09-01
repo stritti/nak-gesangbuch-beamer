@@ -42,6 +42,7 @@ class ProjectorWindowManager {
     const url = buildProjectorUrl(options);
     const windowFeatures = localStorage.getItem('projectorWindowFeatures') || DEFAULT_WINDOW_FEATURES;
 
+    // Versuche zuerst über die interne Referenz auf das bestehende Fenster zuzugreifen.
     if (this.globalProjectorWindow && !this.globalProjectorWindow.closed) {
       try {
         void this.globalProjectorWindow.location.href;
@@ -53,20 +54,11 @@ class ProjectorWindowManager {
       }
     }
 
-    try {
-      const existingWindow = window.open('', PROJECTOR_WINDOW_NAME);
-      if (existingWindow && !existingWindow.closed) {
-        void existingWindow.location.href;
-        existingWindow.location.href = url;
-        existingWindow.focus();
-        this.globalProjectorWindow = existingWindow;
-        localStorage.setItem('projectorWindowOpen', 'true');
-        return this.globalProjectorWindow;
-      }
-    } catch {
-      // Fenster nicht zugreifbar — neues Fenster öffnen
-    }
-
+    // window.open(url, name, features) findet ein bestehendes Fenster mit gleichem Namen
+    // und navigiert es, oder öffnet ein neues Fenster/Tab — beides gewünscht.
+    // WICHTIG: Kein window.open('', name) als Zwischenschritt verwenden!
+    // Das kann das aktuelle Fenster zurückgeben, wenn dessen Name übereinstimmt,
+    // und würde dann den aktuellen Tab zur Projektion navigieren.
     this.globalProjectorWindow = window.open(url, PROJECTOR_WINDOW_NAME, windowFeatures);
     if (this.globalProjectorWindow) {
       localStorage.setItem('projectorWindowOpen', 'true');
@@ -93,6 +85,11 @@ class ProjectorWindowManager {
     try {
       const candidate = window.open('', PROJECTOR_WINDOW_NAME);
       if (candidate && !candidate.closed) {
+        // Nie das aktuelle Fenster als Projektorfenster zurückgeben —
+        // window.open('', name) kann das aktuelle Fenster liefern, wenn der Name übereinstimmt.
+        if (candidate === window) {
+          return null;
+        }
         if (candidate.location.href === 'about:blank') {
           // Neu erzeugtes leeres Fenster — kein bestehendes Projektorfenster
           candidate.close();

@@ -66,7 +66,7 @@
             </p>
           </div>
           <div v-else class="text-center">
-            <p>Keine Inhalte zur Anzeige</p>
+            <p v-if="placeholderText">{{ placeholderText }}</p>
           </div>
         </div>
       </transition>
@@ -111,6 +111,7 @@ interface Props {
   verseNumbers?: string[]; // Strophennummern wie "1", "2", "R", etc.
   songTitle?: string;      // Titel des Liedes
   songNumber?: string;     // Nummer des Liedes
+  placeholderText?: string; // Text bei leerem Slide
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -123,7 +124,8 @@ const props = withDefaults(defineProps<Props>(), {
   maxLinesPerSlide: 4,
   verseNumbers: () => [],
   songTitle: '',
-  songNumber: ''
+  songNumber: '',
+  placeholderText: ''
 });
 
 // Emits

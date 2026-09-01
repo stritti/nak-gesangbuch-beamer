@@ -17,7 +17,7 @@
     <div class="flex flex-col md:flex-row gap-6">
       <!-- Seitenleiste mit Buchfilter -->
       <div class="w-full md:w-64 shrink-0">
-        <BookFilter @filter="handleBookFilter" />
+        <BookFilter v-model="selectedBookId" />
       </div>
 
       <!-- Hauptinhalt -->
@@ -82,21 +82,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import type { Song } from '@/features/songs/song.types';
 import { useSongStore } from '@/features/songs/song.store';
 import { useSetlistStore } from '@/features/setlist/setlist.store';
-import { useRouter } from 'vue-router';
 import { pickFiles } from '@/utils/file';
 import SongCard from '@/components/SongCard.vue';
 import BookFilter from '@/components/BookFilter.vue';
 import { songRepository } from '@/features/songs/song.repository';
 import { nakRepository } from '@/features/ingest/nak.repository';
 import { getBookName } from '@/features/songs/book-names';
+import { projectorWindowManager } from '@/features/projection/projector-window';
 
 const songStore = useSongStore();
 const setlistStore = useSetlistStore();
-const router = useRouter();
 
 const searchQuery = ref('');
 const selectedBookId = ref<string | null>(null);
@@ -109,7 +108,7 @@ onMounted(async () => {
   if (songStore.songs.length === 0) {
     await songStore.loadSongs();
   }
-  filteredSongs.value = songStore.songs;
+  filteredSongs.value = sortSongsByNumber(songStore.songs);
 });
 
 // Importiere Lieder aus Dateien
@@ -122,7 +121,7 @@ const importSongs = async () => {
     importResults.value = results;
     
     // Aktualisiere die gefilterten Lieder
-    filteredSongs.value = songStore.songs;
+    filteredSongs.value = sortSongsByNumber(songStore.songs);
   } catch (error) {
     console.error('Fehler beim Importieren der Lieder:', error);
   }
@@ -130,17 +129,25 @@ const importSongs = async () => {
 
 
 // Suche nach Liedern
+const sortSongsByNumber = (songs: Song[]) => {
+  return [...songs].sort((a, b) => {
+    const numA = parseInt(a.number || '0', 10);
+    const numB = parseInt(b.number || '0', 10);
+    return numA - numB;
+  });
+};
+
 const performSearch = async () => {
   if (!searchQuery.value.trim() && !selectedBookId.value) {
-    filteredSongs.value = songStore.songs;
+    filteredSongs.value = sortSongsByNumber(songStore.songs);
     return;
   }
   
   // Wenn ein Buch ausgewählt ist, verwende das NAK-Repository für die Suche mit Filter
   if (selectedBookId.value) {
-    filteredSongs.value = await nakRepository.searchSongs(searchQuery.value, { buchId: selectedBookId.value });
+    filteredSongs.value = sortSongsByNumber(await nakRepository.searchSongs(searchQuery.value, { buchId: selectedBookId.value }));
   } else {
-    filteredSongs.value = await songRepository.searchSongs(searchQuery.value);
+    filteredSongs.value = sortSongsByNumber(await songRepository.searchSongs(searchQuery.value));
   }
 };
 
@@ -150,11 +157,9 @@ const clearSearch = () => {
   performSearch();
 };
 
-// Behandle Buchfilter-Änderungen
-const handleBookFilter = (bookId: string | null) => {
-  selectedBookId.value = bookId;
+watch(selectedBookId, () => {
   performSearch();
-};
+});
 
 // Zeige Details eines Liedes an
 const viewSongDetails = (id: string) => {
@@ -184,10 +189,6 @@ const projectSong = (id: string) => {
   const song = songStore.getSongById(id);
   if (!song) return;
   
-  // Hier würden wir zur Projektor-Seite navigieren und das Lied anzeigen
-  router.push({ 
-    path: '/projector', 
-    query: { songId: id } 
-  });
+  projectorWindowManager.openProjectorWindow({ songId: id });
 };
 </script>

@@ -5,23 +5,20 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: () => import('../pages/HomePage.vue')
+      name: 'dashboard',
+      component: () => import('../pages/DashboardPage.vue')
     },
     {
       path: '/library',
-      name: 'library',
-      component: () => import('../pages/LibraryPage.vue')
+      redirect: '/'
     },
     {
       path: '/setlist',
-      name: 'setlist',
-      component: () => import('../pages/SetlistPage.vue')
+      redirect: '/'
     },
     {
       path: '/control',
-      name: 'control',
-      component: () => import('../pages/ControlPage.vue')
+      redirect: '/'
     },
     {
       path: '/projector',

@@ -19,7 +19,7 @@
         <template v-if="currentSlide && currentSlide.length">
           <p v-for="(line, i) in currentSlide" :key="i" class="line-clamp-1">{{ line }}</p>
         </template>
-        <p v-else class="text-gray-400">Kein Inhalt</p>
+        <p v-else-if="placeholderText" class="text-gray-400">{{ placeholderText }}</p>
       </div>
     </div>
     
@@ -82,14 +82,16 @@ interface Props {
   currentIndex?: number;
   totalSlides?: number;
   isFullscreen?: boolean;
+  placeholderText?: string;
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   currentSlide: () => [],
   nextSlide: () => [],
   currentIndex: 0,
   totalSlides: 0,
-  isFullscreen: false
+  isFullscreen: false,
+  placeholderText: ''
 });
 
 // Emits

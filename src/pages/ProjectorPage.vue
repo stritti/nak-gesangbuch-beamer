@@ -9,6 +9,7 @@
     :max-lines-per-slide="projectionStore.maxLinesPerSlide"
     :song-title="currentSong?.title"
     :song-number="currentSong?.number"
+    :placeholder-text="projectionStore.placeholderText"
     @next="projectionStore.next()"
     @prev="projectionStore.prev()"
     @blackout="projectionStore.toggleBlackout()"
@@ -180,35 +181,23 @@ let checkInterval: number | null = null;
 
 // Prüfe, ob die Seite in einem eigenen Fenster geöffnet ist
 const checkIfInOwnWindow = () => {
-  // Wenn wir nicht in einem eigenen Fenster sind, öffnen wir uns selbst in einem neuen Fenster
+  // Wenn wir nicht in einem eigenen Fenster sind, öffnen wir uns selbst in einem neuen Tab
+  // und leiten die aktuelle Seite zur Startseite weiter.
   if (window.opener === null && window.parent === window && !window.name.includes('projector')) {
     // Speichere die aktuelle URL mit allen Parametern
     const url = window.location.href;
+    const windowFeatures = localStorage.getItem('projectorWindowFeatures') || 'width=1024,height=768';
     
-    // Prüfe, ob bereits ein Projektorfenster existiert
-    const existingWindow = window.open('', 'projector');
-    
-    if (existingWindow && !existingWindow.closed) {
-      // Wenn ein Fenster existiert, navigiere es zu unserer URL
-      existingWindow.location.href = url;
-      existingWindow.focus();
-    } else {
-      // Sonst öffne ein neues Fenster
-      const windowFeatures = localStorage.getItem('projectorWindowFeatures') || 'width=1024,height=768';
-      const newWindow = window.open(url, 'projector', windowFeatures);
-      
-      if (newWindow) {
-        newWindow.focus();
-      }
+    // Immer in neuem Tab öffnen — window.open(url, name, features) findet ein bestehendes
+    // Fenster mit gleichem Name oder öffnet ein neues Tab.
+    const newWindow = window.open(url, 'projector', windowFeatures);
+    if (newWindow) {
+      newWindow.focus();
     }
     
-    // Leite zur Startseite weiter oder schließe das aktuelle Fenster
-    try {
-      window.close();
-    } catch (e) {
-      // Falls das Schließen nicht funktioniert, leiten wir zur Startseite weiter
-      window.location.href = import.meta.env.BASE_URL;
-    }
+    // Aktuellen Tab zur Startseite weiterleiten (window.close() funktioniert nicht
+    // für fenster, die nicht per Script geöffnet wurden)
+    window.location.href = import.meta.env.BASE_URL;
     
     return false;
   }

@@ -25,12 +25,12 @@
       <div class="bg-white p-6 rounded-lg shadow-md">
         <h2 class="text-xl font-semibold mb-4">Projektion</h2>
         <p class="mb-4">Lieder im Vollbildmodus projizieren</p>
-        <router-link
-          to="/projector"
+        <button
+          @click="openProjector"
           class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
           Projektion starten
-        </router-link>
+        </button>
       </div>
       <div class="bg-white p-6 rounded-lg shadow-md">
         <h2 class="text-xl font-semibold mb-4">Steuerung</h2>
@@ -47,5 +47,9 @@
 </template>
 
 <script setup lang="ts">
-// Home page component
+import { projectorWindowManager } from '@/features/projection/projector-window';
+
+const openProjector = () => {
+  projectorWindowManager.openProjectorWindow({});
+};
 </script>

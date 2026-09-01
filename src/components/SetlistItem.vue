@@ -2,10 +2,15 @@
   <div 
     class="setlist-item bg-white rounded-lg shadow-sm p-3 mb-2 hover:shadow transition-shadow"
     :class="{ 'border-l-4 border-blue-500': active }"
+    draggable="true"
+    @dragstart="onDragStart"
+    @dragover.prevent="onDragOver"
+    @drop="onDrop"
+    @dragend="onDragEnd"
   >
     <div class="flex justify-between items-center">
       <div class="flex items-center">
-        <div class="mr-2 text-gray-400 cursor-move" title="Ziehen zum Verschieben">
+        <div class="mr-2 text-gray-400 cursor-move" title="Ziehen zum Verschieben" @mousedown.prevent>
           ≡
         </div>
         <div>
@@ -23,7 +28,7 @@
         <button
           class="p-1 text-gray-500 hover:text-gray-700"
           @click="$emit('edit')"
-          title="Bearbeiten"
+          title="Strophen bearbeiten"
         >
           ✎
         </button>
@@ -60,17 +65,46 @@ interface Props {
   verseOrder?: string[];
   active?: boolean;
   currentVerseIndex?: number;
+  index?: number; // Index in der Setlist für Drag-and-Drop
 }
 
 const props = withDefaults(defineProps<Props>(), {
   verseOrder: () => [],
   active: false,
-  currentVerseIndex: -1
+  currentVerseIndex: -1,
+  index: 0
 });
 
 // Emits
-defineEmits<{
+const emit = defineEmits<{
   (e: 'edit'): void;
   (e: 'remove'): void;
+  (e: 'reorder', fromIndex: number, toIndex: number): void;
 }>();
+
+let dragSourceIndex: number | null = null;
+
+function onDragStart(e: DragEvent) {
+  dragSourceIndex = props.index;
+  e.dataTransfer?.setData('text/plain', String(props.index));
+  e.dataTransfer!.effectAllowed = 'move';
+}
+
+function onDragOver(e: DragEvent) {
+  e.preventDefault();
+  e.dataTransfer!.dropEffect = 'move';
+}
+
+function onDrop(e: DragEvent) {
+  e.preventDefault();
+  const targetIndex = props.index;
+  if (dragSourceIndex !== null && dragSourceIndex !== targetIndex) {
+    emit('reorder', dragSourceIndex, targetIndex);
+  }
+  dragSourceIndex = null;
+}
+
+function onDragEnd() {
+  dragSourceIndex = null;
+}
 </script>
