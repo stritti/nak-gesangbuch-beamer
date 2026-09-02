@@ -4,6 +4,10 @@ import { ref, computed, watch } from 'vue';
 export type ThemeMode = 'auto' | 'light' | 'dark';
 export type ResolvedTheme = 'light' | 'dark';
 
+// App-spezifischer Storage-Key, um Kollisionen mit anderen Apps auf derselben
+// *.github.io-Origin zu vermeiden (GitHub Pages Subpath-Deployment).
+export const THEME_STORAGE_KEY = 'nak-gesangbuch-beamer-theme';
+
 function getSystemTheme(): ResolvedTheme {
   if (typeof window === 'undefined') return 'light';
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -84,6 +88,7 @@ export const useThemeStore = defineStore('theme', () => {
   };
 }, {
   persist: {
+    key: THEME_STORAGE_KEY,
     pick: ['mode'],
   },
 });

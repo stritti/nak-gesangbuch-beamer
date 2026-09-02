@@ -3,9 +3,10 @@
     class="p-2 rounded-lg transition-colors"
     :class="buttonClass"
     :title="tooltip"
+    :aria-label="ariaLabel"
     @click="themeStore.toggle()"
   >
-    <span class="text-lg leading-none">{{ icon }}</span>
+    <span class="text-lg leading-none" aria-hidden="true">{{ icon }}</span>
   </button>
 </template>
 
@@ -30,6 +31,16 @@ const tooltip = computed(() => {
     case 'dark': return 'Dunkel — Klicken zum Umschalten';
     case 'light': return 'Hell — Klicken zum Umschalten';
     default: return 'Automatisch (System) — Klicken zum Umschalten';
+  }
+});
+
+// Barrierefreier Name: beschreibt den aktuellen Modus und die Aktion
+const ariaLabel = computed(() => {
+  switch (themeStore.mode) {
+    case 'auto': return 'Farbschema: Automatisch (System). Klicken zum Umschalten auf Dunkel.';
+    case 'dark': return 'Farbschema: Dunkel. Klicken zum Umschalten auf Hell.';
+    case 'light': return 'Farbschema: Hell. Klicken zum Umschalten auf Automatisch.';
+    default: return 'Farbschema: Automatisch (System). Klicken zum Umschalten auf Dunkel.';
   }
 });
 

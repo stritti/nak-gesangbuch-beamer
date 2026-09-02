@@ -10,7 +10,8 @@
       // Anti-Flash: Theme-Klasse vor dem Rendern setzen (verhindert FOUC)
       (function () {
         try {
-          var stored = JSON.parse(localStorage.getItem('theme') || '{}');
+          // App-spezifischer Key — muss mit THEME_STORAGE_KEY im Theme-Store übereinstimmen
+          var stored = JSON.parse(localStorage.getItem('nak-gesangbuch-beamer-theme') || '{}');
           var mode = stored && stored.mode ? stored.mode : 'auto';
           var dark = mode === 'dark' ||
             (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
