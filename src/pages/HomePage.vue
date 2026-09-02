@@ -1,8 +1,8 @@
 <template>
   <div class="container mx-auto p-4">
-    <h1 class="text-3xl font-bold mb-6">NAK Gesangbuch Beamer</h1>
+    <h1 class="text-3xl font-bold mb-6 dark:text-gray-100">NAK Gesangbuch Beamer</h1>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div class="bg-white p-6 rounded-lg shadow-md">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
         <h2 class="text-xl font-semibold mb-4">Bibliothek</h2>
         <p class="mb-4">Lieder durchsuchen und verwalten</p>
         <router-link
@@ -12,7 +12,7 @@
           Zur Bibliothek
         </router-link>
       </div>
-      <div class="bg-white p-6 rounded-lg shadow-md">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
         <h2 class="text-xl font-semibold mb-4">Setlists</h2>
         <p class="mb-4">Setlists erstellen und bearbeiten</p>
         <router-link
@@ -22,7 +22,7 @@
           Zu den Setlists
         </router-link>
       </div>
-      <div class="bg-white p-6 rounded-lg shadow-md">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
         <h2 class="text-xl font-semibold mb-4">Projektion</h2>
         <p class="mb-4">Lieder im Vollbildmodus projizieren</p>
         <button
@@ -32,7 +32,7 @@
           Projektion starten
         </button>
       </div>
-      <div class="bg-white p-6 rounded-lg shadow-md">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
         <h2 class="text-xl font-semibold mb-4">Steuerung</h2>
         <p class="mb-4">Fernsteuerung der Projektion</p>
         <router-link

@@ -1,6 +1,6 @@
 <template>
   <div class="container mx-auto p-4">
-    <h1 class="text-3xl font-bold mb-6">Setlists</h1>
+    <h1 class="text-3xl font-bold mb-6 dark:text-gray-100">Setlists</h1>
     
     <div class="mb-6 flex flex-wrap gap-2">
       <button
@@ -22,23 +22,23 @@
       >
         Setlist importieren
       </button>
-      <router-link to="/" class="text-blue-600 hover:underline self-center ml-2">
+      <router-link to="/" class="text-blue-600 dark:text-blue-400 hover:underline self-center ml-2">
         Zurück zur Startseite
       </router-link>
     </div>
     
     <!-- Keine Setlists vorhanden -->
-    <div v-if="setlistStore.setlists.length === 0" class="bg-white p-6 rounded-lg shadow-md mb-6">
+    <div v-if="setlistStore.setlists.length === 0" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
       <p>Keine Setlists vorhanden. Erstellen Sie eine neue Setlist oder importieren Sie eine bestehende.</p>
     </div>
     
     <!-- Setlist-Auswahl -->
     <div v-else class="mb-6">
-      <label class="block text-gray-700 mb-2">Aktive Setlist:</label>
+      <label class="block text-gray-700 dark:text-gray-300 mb-2">Aktive Setlist:</label>
       <div class="flex gap-2">
         <select 
           v-model="setlistStore.currentSetlistId"
-          class="border rounded p-2 flex-grow"
+          class="border rounded p-2 flex-grow dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
         >
           <option v-for="setlist in setlistStore.setlists" :key="setlist.id" :value="setlist.id">
             {{ setlist.name }} ({{ setlist.items.length }} Lieder)
@@ -55,7 +55,7 @@
     </div>
     
     <!-- Aktuelle Setlist -->
-    <div v-if="currentSetlist" class="bg-white p-6 rounded-lg shadow-md mb-6">
+    <div v-if="currentSetlist" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">{{ currentSetlist.name }}</h2>
         <button
@@ -67,7 +67,7 @@
       </div>
       
       <!-- Setlist-Items -->
-      <div v-if="currentSetlist.items.length === 0" class="text-gray-500 mb-4">
+      <div v-if="currentSetlist.items.length === 0" class="text-gray-500 dark:text-gray-400 mb-4">
         Diese Setlist ist leer. Fügen Sie Lieder aus der Bibliothek hinzu.
       </div>
       

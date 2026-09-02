@@ -6,6 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="NAK Gesangbuch Beamer - Projektion für Gottesdienste und Proben" />
     <title>NAK Gesangbuch Beamer</title>
+    <script>
+      // Anti-Flash: Theme-Klasse vor dem Rendern setzen (verhindert FOUC)
+      (function () {
+        try {
+          // App-spezifischer Key — muss mit THEME_STORAGE_KEY im Theme-Store übereinstimmen
+          var stored = JSON.parse(localStorage.getItem('nak-gesangbuch-beamer-theme') || '{}');
+          var mode = stored && stored.mode ? stored.mode : 'auto';
+          var dark = mode === 'dark' ||
+            (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+        } catch (e) {
+          // Ignoriere Fehler beim Parsen
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>
