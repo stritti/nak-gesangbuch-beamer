@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/stritti/nak-gesangbuch-beamer/compare/nak-gesangbuch-beamer-v0.3.0...nak-gesangbuch-beamer-v0.4.0) (2026-09-02)
+
+
+### Features
+
+* dark-mode mit auto-modus basierend auf system-preference ([d3107aa](https://github.com/stritti/nak-gesangbuch-beamer/commit/d3107aa9efcccdfa01ac59101456f9a9d58e7830))
+
+
+### Bug Fixes
+
+* review-feedback zu storage-key und barrierefreiheit ([d721245](https://github.com/stritti/nak-gesangbuch-beamer/commit/d721245b044e2938ed184f1b691a93b22e0f1bc4))
+
 ## [0.3.0](https://github.com/stritti/nak-gesangbuch-beamer/compare/nak-gesangbuch-beamer-v0.2.0...nak-gesangbuch-beamer-v0.3.0) (2026-09-01)
 
 
