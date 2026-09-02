@@ -1,27 +1,27 @@
 <template>
   <div 
-    class="song-card bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
+    class="song-card bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
     :class="{ 'border-2 border-blue-500': selected }"
   >
     <div class="flex justify-between items-start">
       <div>
         <h3 class="text-lg font-semibold">{{ song.title }}</h3>
-        <p v-if="song.subtitle" class="text-sm text-gray-600">{{ song.subtitle }}</p>
+        <p v-if="song.subtitle" class="text-sm text-gray-600 dark:text-gray-300">{{ song.subtitle }}</p>
       </div>
-      <div v-if="song.number" class="text-lg font-bold text-gray-700">
+      <div v-if="song.number" class="text-lg font-bold text-gray-700 dark:text-gray-300">
         {{ song.number }}
       </div>
     </div>
     
     <!-- Buchinformation anzeigen -->
-    <p v-if="song.source?.buchId" class="text-sm font-medium text-blue-600 mt-1">
+    <p v-if="song.source?.buchId" class="text-sm font-medium text-blue-600 dark:text-blue-400 mt-1">
       {{ getBookName(song.source.buchId) }}
-      <span v-if="song.source.rubric" class="text-gray-500">
+      <span v-if="song.source.rubric" class="text-gray-500 dark:text-gray-400">
         ({{ song.source.rubric }})
       </span>
     </p>
     
-    <div class="mt-2 text-sm text-gray-600">
+    <div class="mt-2 text-sm text-gray-600 dark:text-gray-300">
       <p v-if="song.authors && song.authors.length">
         {{ song.authors.join(', ') }}
       </p>
@@ -32,7 +32,7 @@
       <span 
         v-for="topic in song.topics" 
         :key="topic"
-        class="inline-block px-2 py-1 bg-gray-100 text-xs rounded"
+        class="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-700 text-xs rounded"
       >
         {{ topic }}
       </span>
@@ -40,7 +40,7 @@
     
     <div class="mt-3 flex justify-between">
       <button
-        class="text-blue-600 hover:text-blue-800 text-sm"
+        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm"
         @click="$emit('view', song.id)"
       >
         Details

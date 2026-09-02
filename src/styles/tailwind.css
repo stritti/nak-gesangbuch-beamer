@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+/* Dark-Mode über .dark-Klasse auf <html> (Class-Strategie) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Basis-Farben für Light-Mode */
+@layer base {
+  html {
+    @apply bg-white text-gray-900;
+  }
+  html.dark {
+    @apply bg-gray-900 text-gray-100;
+  }
+}
+
 .projection {
   @apply w-screen h-screen overflow-hidden select-none;
 }

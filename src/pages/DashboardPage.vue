@@ -1,55 +1,58 @@
 <template>
   <div class="dashboard-page h-screen flex flex-col">
     <!-- Header -->
-    <header class="flex items-center justify-between px-4 py-3 bg-white border-b shadow-sm shrink-0">
-      <h1 class="text-xl font-bold">NAK Gesangbuch Beamer</h1>
-      <button
-        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        @click="openProjector"
-      >
-        Projektor
-      </button>
+    <header class="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 border-b dark:border-gray-700 shadow-sm shrink-0">
+      <h1 class="text-xl font-bold dark:text-gray-100">NAK Gesangbuch Beamer</h1>
+      <div class="flex items-center gap-2">
+        <ThemeToggle />
+        <button
+          class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          @click="openProjector"
+        >
+          Projektor
+        </button>
+      </div>
     </header>
 
     <!-- Hauptbereich -->
     <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 min-h-0 overflow-hidden">
       <!-- Linke Spalte: Steuerung -->
       <div class="flex flex-col gap-4 overflow-y-auto">
-        <div class="bg-white rounded-lg shadow-md p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
           <button
             class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mb-2"
             @click="openProjector"
           >
             Projektor öffnen
           </button>
-          <p v-if="projectorWindow && !projectorWindow.closed" class="text-green-600 text-sm">
+          <p v-if="projectorWindow && !projectorWindow.closed" class="text-green-600 dark:text-green-400 text-sm">
             Projektor ist geöffnet
           </p>
-          <p v-else class="text-red-600 text-sm">
+          <p v-else class="text-red-600 dark:text-red-400 text-sm">
             Projektor ist nicht geöffnet
           </p>
         </div>
 
         <!-- Setlist-Navigation, falls eine Setlist aktiv ist -->
-        <div v-if="inSetlist" class="bg-white rounded-lg shadow-md p-4 mb-4">
+        <div v-if="inSetlist" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-4">
           <h3 class="text-lg font-semibold mb-2 flex items-center gap-2">
             Setlist-Navigation
-            <span class="text-sm font-normal text-gray-500">({{ currentSetlistIndex + 1 }} / {{ totalSetlistItems }})</span>
+            <span class="text-sm font-normal text-gray-500 dark:text-gray-400">({{ currentSetlistIndex + 1 }} / {{ totalSetlistItems }})</span>
           </h3>
-          <div v-if="currentSetlist" class="mb-3 p-2 bg-gray-50 rounded text-sm">
+          <div v-if="currentSetlist" class="mb-3 p-2 bg-gray-50 dark:bg-gray-700 rounded text-sm">
             <span class="font-medium">{{ getSongById(currentSetlist.items[currentSetlistIndex]?.songId)?.title || '—' }}</span>
-            <span class="text-gray-500 ml-2">#{{ currentSetlist.items[currentSetlistIndex]?.songId ? getSongById(currentSetlist.items[currentSetlistIndex]!.songId)?.number : '' }}</span>
+            <span class="text-gray-500 dark:text-gray-400 ml-2">#{{ currentSetlist.items[currentSetlistIndex]?.songId ? getSongById(currentSetlist.items[currentSetlistIndex]!.songId)?.number : '' }}</span>
           </div>
           <div class="flex justify-between items-center">
             <button
-              class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+              class="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50"
               :disabled="currentSetlistIndex <= 0"
               @click="handlePrevSong"
             >
               ← Vorheriges Lied
             </button>
             <button
-              class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+              class="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50"
               :disabled="currentSetlistIndex >= totalSetlistItems - 1"
               @click="handleNextSong"
             >
@@ -73,11 +76,11 @@
         />
 
         <!-- Einstellungen -->
-        <div v-if="showSettings" class="bg-white rounded-lg shadow-md p-4">
+        <div v-if="showSettings" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
           <h3 class="text-lg font-semibold mb-2">Projektionseinstellungen</h3>
 
           <div class="mb-3">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Schriftgröße</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Schriftgröße</label>
             <div class="flex items-center">
               <input
                 v-model.number="projectionStore.fontSize"
@@ -92,7 +95,7 @@
           </div>
 
           <div class="mb-3">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Zeilenhöhe</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Zeilenhöhe</label>
             <div class="flex items-center">
               <input
                 v-model.number="projectionStore.lineHeight"
@@ -107,7 +110,7 @@
           </div>
 
           <div class="mb-3">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Max. Zeilen pro Slide</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max. Zeilen pro Slide</label>
             <div class="flex items-center">
               <input
                 v-model.number="projectionStore.maxLinesPerSlide"
@@ -122,10 +125,10 @@
           </div>
 
           <div class="mb-3">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Farbschema</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Farbschema</label>
             <select
               v-model="projectionStore.theme"
-              class="w-full p-2 border rounded"
+              class="w-full p-2 border rounded dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
             >
               <option value="high-contrast">Hoher Kontrast (Schwarz/Weiß)</option>
               <option value="dark">Dunkel</option>
@@ -134,26 +137,26 @@
           </div>
 
           <div class="mb-3">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Platzhalter-Text (leere Slides)</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Platzhalter-Text (leere Slides)</label>
             <input
               v-model="projectionStore.placeholderText"
               type="text"
               placeholder="z.B. Erntedank 2026"
-              class="w-full p-2 border rounded"
+              class="w-full p-2 border rounded dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
             />
           </div>
 
           <div class="mb-3">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Projektor-Fenster</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Projektor-Fenster</label>
             <div class="grid grid-cols-2 gap-2 mb-2">
               <button
-                class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                class="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
                 @click="setProjectorWindow('primary')"
               >
                 Hauptbildschirm
               </button>
               <button
-                class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                class="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
                 @click="setProjectorWindow('secondary')"
               >
                 Zweiter Bildschirm
@@ -161,13 +164,13 @@
             </div>
             <div class="grid grid-cols-2 gap-2">
               <button
-                class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                class="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
                 @click="setProjectorWindow('fullscreen')"
               >
                 Vollbild
               </button>
               <button
-                class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                class="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
                 @click="setProjectorWindow('custom')"
               >
                 Benutzerdefiniert
@@ -180,11 +183,11 @@
       <!-- Rechte Spalte: Bibliothek + Setlist -->
       <div class="flex flex-col gap-4 min-h-0 overflow-hidden">
         <!-- Bibliothek -->
-        <section class="bg-white rounded-lg shadow-md p-4 flex flex-col min-h-0" style="flex: 1 1 55%">
+        <section class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 flex flex-col min-h-0" style="flex: 1 1 55%">
           <div class="flex justify-between items-center mb-3 shrink-0">
             <h2 class="text-xl font-semibold">Bibliothek</h2>
             <button
-              class="px-3 py-1.5 bg-gray-200 rounded text-sm hover:bg-gray-300 disabled:opacity-50"
+              class="px-3 py-1.5 bg-gray-200 dark:bg-gray-600 rounded text-sm hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50"
               :disabled="songStore.loading"
               @click="importSongs"
             >
@@ -192,10 +195,10 @@
             </button>
           </div>
 
-          <div v-if="importResults.invalid.length > 0" class="bg-yellow-100 border-l-4 border-yellow-500 p-2 mb-3 text-sm shrink-0">
-            <h4 class="font-bold text-yellow-800">Fehler beim Import:</h4>
+          <div v-if="importResults.invalid.length > 0" class="bg-yellow-100 dark:bg-yellow-900/30 border-l-4 border-yellow-500 p-2 mb-3 text-sm shrink-0">
+            <h4 class="font-bold text-yellow-800 dark:text-yellow-200">Fehler beim Import:</h4>
             <ul class="list-disc pl-5">
-              <li v-for="(invalid, index) in importResults.invalid" :key="index" class="text-yellow-800">
+              <li v-for="(invalid, index) in importResults.invalid" :key="index" class="text-yellow-800 dark:text-yellow-200">
                 {{ invalid.file }}: {{ invalid.errors.join(', ') }}
               </li>
             </ul>
@@ -208,10 +211,10 @@
                 v-model="searchQuery"
                 type="text"
                 placeholder="Suche nach Titel, Nummer oder Text..."
-                class="w-full p-2 pr-8 border rounded-lg"
+                class="w-full p-2 pr-8 border rounded-lg dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 @input="performSearch"
               />
-              <span v-if="searchQuery" class="absolute right-2 top-2 cursor-pointer text-gray-500" @click="clearSearch">
+              <span v-if="searchQuery" class="absolute right-2 top-2 cursor-pointer text-gray-500 dark:text-gray-400" @click="clearSearch">
                 ✕
               </span>
             </div>
@@ -219,31 +222,31 @@
           </div>
 
           <div class="flex-1 overflow-y-auto min-h-0 -mx-2 px-2">
-            <div v-if="songStore.error" class="text-red-600 text-sm mb-2">
+            <div v-if="songStore.error" class="text-red-600 dark:text-red-400 text-sm mb-2">
               {{ songStore.error }}
             </div>
-            <p v-if="filteredSongs.length === 0 && !songStore.loading" class="text-gray-500 text-sm p-2">
+            <p v-if="filteredSongs.length === 0 && !songStore.loading" class="text-gray-500 dark:text-gray-400 text-sm p-2">
               Keine Lieder gefunden.
             </p>
             <ul v-else>
               <li
                 v-for="song in filteredSongs"
                 :key="song.id"
-                class="flex items-center gap-1 border-b border-gray-100 last:border-0"
+                class="flex items-center gap-1 border-b border-gray-100 dark:border-gray-700 last:border-0"
               >
                 <button
-                  class="flex-1 flex items-center gap-2 px-2 py-2 text-left rounded hover:bg-gray-50 min-w-0"
+                  class="flex-1 flex items-center gap-2 px-2 py-2 text-left rounded hover:bg-gray-50 dark:hover:bg-gray-700 min-w-0"
                   :title="`${song.title} projizieren`"
                   @click="projectSong(song.id)"
                 >
-                  <span v-if="song.number" class="text-sm font-semibold text-gray-500 w-10 shrink-0">{{ song.number }}</span>
+                  <span v-if="song.number" class="text-sm font-semibold text-gray-500 dark:text-gray-400 w-10 shrink-0">{{ song.number }}</span>
                   <span class="truncate text-sm font-medium flex-1">{{ song.title }}</span>
-                  <span v-if="song.source?.buchId" class="text-xs text-blue-600 shrink-0 hidden sm:inline">
+                  <span v-if="song.source?.buchId" class="text-xs text-blue-600 dark:text-blue-400 shrink-0 hidden sm:inline">
                     {{ getBookName(song.source.buchId) }}
                   </span>
                 </button>
                 <button
-                  class="p-1.5 text-blue-600 hover:bg-blue-50 rounded shrink-0"
+                  class="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded shrink-0"
                   title="Zur Setlist hinzufügen"
                   @click="addToSetlist(song.id)"
                 >
@@ -255,10 +258,10 @@
         </section>
 
         <!-- Setlist -->
-        <section class="bg-white rounded-lg shadow-md p-4 flex flex-col min-h-0" style="flex: 1 1 45%">
+        <section class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 flex flex-col min-h-0" style="flex: 1 1 45%">
           <div class="flex justify-between items-center mb-3 shrink-0">
             <h2 class="text-xl font-semibold">
-              Setlist<span v-if="currentSetlist" class="text-sm font-normal text-gray-500 ml-2">{{ currentSetlist.name }}</span>
+              Setlist<span v-if="currentSetlist" class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">{{ currentSetlist.name }}</span>
             </h2>
             <button
               class="px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
@@ -269,7 +272,7 @@
           </div>
 
           <div class="flex-1 overflow-y-auto min-h-0 -mx-2 px-2">
-            <p v-if="!currentSetlist || currentSetlist.items.length === 0" class="text-gray-500 text-sm p-2">
+            <p v-if="!currentSetlist || currentSetlist.items.length === 0" class="text-gray-500 dark:text-gray-400 text-sm p-2">
               Die Setlist ist leer. Fügen Sie Lieder aus der Bibliothek hinzu.
             </p>
             <div v-else>
@@ -278,7 +281,7 @@
                 :key="`${item.songId}-${index}`"
                 class="flex items-start gap-2"
               >
-                <span class="text-gray-400 text-sm font-medium w-6 text-right pt-3 shrink-0">{{ index + 1 }}.</span>
+                <span class="text-gray-400 dark:text-gray-500 text-sm font-medium w-6 text-right pt-3 shrink-0">{{ index + 1 }}.</span>
                 <div class="flex-1">
                   <SetlistItem
                     :song="getSongById(item.songId) || undefined"
@@ -294,7 +297,7 @@
           </div>
 
           <button
-            class="mt-3 px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm shrink-0"
+            class="mt-3 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-sm shrink-0"
             @click="focusSearch"
           >
             + Lied hinzufügen
@@ -314,6 +317,7 @@ import { useSetlistStore } from '@/features/setlist/setlist.store';
 import ControlPanel from '@/components/ControlPanel.vue';
 import SetlistItem from '@/components/SetlistItem.vue';
 import BookFilter from '@/components/BookFilter.vue';
+import ThemeToggle from '@/components/ThemeToggle.vue';
 import type { Song } from '@/features/songs/song.types';
 import { projectorWindowManager, getWindowFeatures } from '@/features/projection/projector-window';
 import type { ProjectorWindowType } from '@/features/projection/projector-window';

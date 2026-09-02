@@ -1,6 +1,6 @@
 <template>
   <div class="container mx-auto p-4">
-    <h1 class="text-3xl font-bold mb-6">Lied-Bibliothek</h1>
+    <h1 class="text-3xl font-bold mb-6 dark:text-gray-100">Lied-Bibliothek</h1>
     <div class="mb-6 flex flex-wrap gap-2">
       <button
         class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -9,7 +9,7 @@
       >
         {{ songStore.loading ? 'Wird geladen...' : 'Lieder importieren' }}
       </button>
-      <router-link to="/" class="text-blue-600 hover:underline self-center ml-2">
+      <router-link to="/" class="text-blue-600 dark:text-blue-400 hover:underline self-center ml-2">
         Zurück zur Startseite
       </router-link>
     </div>
@@ -29,39 +29,39 @@
               type="text"
               v-model="searchQuery"
               placeholder="Suche nach Titel, Nummer oder Text..."
-              class="w-full p-3 border rounded-lg"
+              class="w-full p-3 border rounded-lg dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
               @input="performSearch"
             />
-            <span v-if="searchQuery" class="absolute right-3 top-3 cursor-pointer" @click="clearSearch">
+            <span v-if="searchQuery" class="absolute right-3 top-3 cursor-pointer dark:text-gray-400" @click="clearSearch">
               ✕
             </span>
           </div>
         </div>
 
         <!-- Ergebnisse -->
-        <div v-if="songStore.error" class="bg-red-100 border-l-4 border-red-500 p-4 mb-6">
-          <p class="text-red-700">{{ songStore.error }}</p>
+        <div v-if="songStore.error" class="bg-red-100 dark:bg-red-900/30 border-l-4 border-red-500 p-4 mb-6">
+          <p class="text-red-700 dark:text-red-300">{{ songStore.error }}</p>
         </div>
 
-        <div v-if="importResults.invalid.length > 0" class="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-6">
-          <h3 class="font-bold text-yellow-800">Fehler beim Import:</h3>
+        <div v-if="importResults.invalid.length > 0" class="bg-yellow-100 dark:bg-yellow-900/30 border-l-4 border-yellow-500 p-4 mb-6">
+          <h3 class="font-bold text-yellow-800 dark:text-yellow-200">Fehler beim Import:</h3>
           <ul class="list-disc pl-5">
-            <li v-for="(invalid, index) in importResults.invalid" :key="index" class="text-yellow-800">
+            <li v-for="(invalid, index) in importResults.invalid" :key="index" class="text-yellow-800 dark:text-yellow-200">
               {{ invalid.file }}: {{ invalid.errors.join(', ') }}
             </li>
           </ul>
         </div>
 
-        <div v-if="filteredSongs.length === 0 && !songStore.loading" class="bg-white p-6 rounded-lg shadow-md mb-6">
+        <div v-if="filteredSongs.length === 0 && !songStore.loading" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
           <p v-if="searchQuery">Keine Lieder gefunden, die "{{ searchQuery }}" enthalten.</p>
           <p v-else-if="selectedBookId">Keine Lieder im ausgewählten Buch gefunden.</p>
           <p v-else>Keine Lieder in der Bibliothek. Importieren Sie Lieder oder laden Sie sie aus dem Datenpfad.</p>
         </div>
 
         <div v-else>
-          <div class="mb-4 text-gray-600">
+          <div class="mb-4 text-gray-600 dark:text-gray-300">
             {{ filteredSongs.length }} Lieder gefunden
-            <span v-if="selectedBookId" class="ml-2 text-blue-600">
+            <span v-if="selectedBookId" class="ml-2 text-blue-600 dark:text-blue-400">
               (gefiltert nach Buch: {{ getBookName(selectedBookId) }})
             </span>
           </div>

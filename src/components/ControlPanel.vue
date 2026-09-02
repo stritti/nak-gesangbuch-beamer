@@ -1,10 +1,10 @@
 <template>
-  <div class="control-panel bg-white rounded-lg shadow-md p-4">
+  <div class="control-panel bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-xl font-semibold">Steuerung</h2>
       <div class="flex space-x-2">
         <button
-          class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm"
+          class="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500 text-sm"
           @click="$emit('settings')"
         >
           Einstellungen
@@ -13,20 +13,20 @@
     </div>
     
     <!-- Aktuelle Slide-Anzeige -->
-    <div class="current-slide bg-gray-100 p-3 rounded mb-4">
-      <p class="text-sm text-gray-500 mb-1">Aktueller Slide ({{ currentIndex + 1 }}/{{ totalSlides }})</p>
+    <div class="current-slide bg-gray-100 dark:bg-gray-700 p-3 rounded mb-4">
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Aktueller Slide ({{ currentIndex + 1 }}/{{ totalSlides }})</p>
       <div class="text-lg font-medium">
         <template v-if="currentSlide && currentSlide.length">
           <p v-for="(line, i) in currentSlide" :key="i" class="line-clamp-1">{{ line }}</p>
         </template>
-        <p v-else-if="placeholderText" class="text-gray-400">{{ placeholderText }}</p>
+        <p v-else-if="placeholderText" class="text-gray-400 dark:text-gray-500">{{ placeholderText }}</p>
       </div>
     </div>
     
     <!-- Nächster Slide (Preview) -->
-    <div v-if="nextSlide" class="next-slide bg-gray-50 p-3 rounded mb-4">
-      <p class="text-sm text-gray-500 mb-1">Nächster Slide</p>
-      <div class="text-base text-gray-600">
+    <div v-if="nextSlide" class="next-slide bg-gray-50 dark:bg-gray-700 p-3 rounded mb-4">
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Nächster Slide</p>
+      <div class="text-base text-gray-600 dark:text-gray-300">
         <p v-for="(line, i) in nextSlide" :key="i" class="line-clamp-1">{{ line }}</p>
       </div>
     </div>
@@ -34,19 +34,19 @@
     <!-- Steuerungstasten -->
     <div class="control-buttons grid grid-cols-4 gap-2 mb-4">
       <button
-        class="col-span-1 py-2 bg-gray-200 rounded hover:bg-gray-300 flex items-center justify-center"
+        class="col-span-1 py-2 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500 flex items-center justify-center"
         @click="$emit('prev')"
       >
         <span>←</span>
       </button>
       <button
-        class="col-span-2 py-2 bg-gray-200 rounded hover:bg-gray-300"
+        class="col-span-2 py-2 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
         @click="$emit('blackout')"
       >
         Blackout (B)
       </button>
       <button
-        class="col-span-1 py-2 bg-gray-200 rounded hover:bg-gray-300 flex items-center justify-center"
+        class="col-span-1 py-2 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500 flex items-center justify-center"
         @click="$emit('next')"
       >
         <span>→</span>
@@ -62,7 +62,7 @@
     </button>
     
     <!-- Hotkey-Legende -->
-    <div class="hotkey-legend text-sm text-gray-500">
+    <div class="hotkey-legend text-sm text-gray-500 dark:text-gray-400">
       <p class="mb-1">Tastenkürzel:</p>
       <ul class="grid grid-cols-2 gap-x-2 gap-y-1">
         <li>← / ,: Vorheriger Slide</li>

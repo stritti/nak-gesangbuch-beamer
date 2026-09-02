@@ -48,41 +48,41 @@ function toggleOpen() {
   <div class="book-filter">
     <button
       type="button"
-      class="w-full flex items-center justify-between px-3 py-2 border rounded-lg bg-white hover:bg-gray-50 transition-colors"
+      class="w-full flex items-center justify-between px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
       @click="toggleOpen"
     >
       <span class="font-medium">
         {{ props.modelValue ? getBookName(props.modelValue) + ' (' + props.modelValue + ')' : 'Alle Bücher' }}
       </span>
-      <span class="text-sm text-gray-500">{{ isOpen ? '▲' : '▼' }}</span>
+      <span class="text-sm text-gray-500 dark:text-gray-400">{{ isOpen ? '▲' : '▼' }}</span>
     </button>
 
     <Transition name="slide-fade">
-      <div v-show="isOpen" class="mt-1 border rounded-lg bg-white shadow-lg max-h-60 overflow-y-auto z-10">
-        <div v-if="isLoading" class="p-3 text-gray-500 text-center">
+      <div v-show="isOpen" class="mt-1 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 shadow-lg max-h-60 overflow-y-auto z-10">
+        <div v-if="isLoading" class="p-3 text-gray-500 dark:text-gray-400 text-center">
           Bücher werden geladen...
         </div>
-        <div v-else-if="books.length === 0" class="p-3 text-gray-500 text-center">
+        <div v-else-if="books.length === 0" class="p-3 text-gray-500 dark:text-gray-400 text-center">
           Keine Bücher gefunden
         </div>
         <div v-else class="py-1">
           <button
-            class="w-full text-left px-3 py-2 hover:bg-gray-100 transition-colors"
-            :class="props.modelValue === null ? 'bg-blue-50 text-blue-700' : ''"
+            class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            :class="props.modelValue === null ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : ''"
             @click="selectBook(null)"
           >
             Alle Bücher
           </button>
-          <hr class="my-1 border-gray-200" />
+          <hr class="my-1 border-gray-200 dark:border-gray-700" />
           <button
             v-for="book in books"
             :key="book.id"
-            class="w-full text-left px-3 py-2 hover:bg-gray-100 transition-colors flex justify-between items-center"
-            :class="props.modelValue === book.id ? 'bg-blue-50 text-blue-700' : ''"
+            class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex justify-between items-center"
+            :class="props.modelValue === book.id ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : ''"
             @click="selectBook(book.id)"
           >
             <span>{{ getBookName(book.id) }} ({{ book.id }})</span>
-            <span class="text-sm text-gray-500">{{ book.count }}</span>
+            <span class="text-sm text-gray-500 dark:text-gray-400">{{ book.count }}</span>
           </button>
         </div>
       </div>

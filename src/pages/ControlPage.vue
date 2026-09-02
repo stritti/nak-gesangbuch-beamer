@@ -3,7 +3,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <!-- Linke Spalte: Steuerung -->
       <div>
-        <h1 class="text-2xl font-bold mb-4">Projektion steuern</h1>
+        <h1 class="text-2xl font-bold mb-4 dark:text-gray-100">Projektion steuern</h1>
         
         <div class="mb-4">
           <button 
@@ -12,20 +12,20 @@
           >
             Projektor öffnen
           </button>
-          <p v-if="projectorWindow && !projectorWindow.closed" class="text-green-600 text-sm">
+          <p v-if="projectorWindow && !projectorWindow.closed" class="text-green-600 dark:text-green-400 text-sm">
             Projektor ist geöffnet
           </p>
-          <p v-else class="text-red-600 text-sm">
+          <p v-else class="text-red-600 dark:text-red-400 text-sm">
             Projektor ist nicht geöffnet
           </p>
         </div>
         
         <!-- Setlist-Navigation, falls eine Setlist aktiv ist -->
-        <div v-if="inSetlist" class="mb-4 bg-white rounded-lg shadow-md p-4">
+        <div v-if="inSetlist" class="mb-4 bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
           <h3 class="text-lg font-semibold mb-2">Setlist-Navigation</h3>
           <div class="flex justify-between items-center">
             <button 
-              class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+              class="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50"
               @click="handlePrevSong"
               :disabled="currentSetlistIndex <= 0"
             >
@@ -33,7 +33,7 @@
             </button>
             <span class="text-sm">{{ currentSetlistIndex + 1 }} / {{ totalSetlistItems }}</span>
             <button 
-              class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+              class="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50"
               @click="handleNextSong"
               :disabled="currentSetlistIndex >= totalSetlistItems - 1"
             >
@@ -56,11 +56,11 @@
         />
         
         <!-- Einstellungen -->
-        <div v-if="showSettings" class="mt-4 bg-white rounded-lg shadow-md p-4">
+        <div v-if="showSettings" class="mt-4 bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
           <h3 class="text-lg font-semibold mb-2">Projektionseinstellungen</h3>
           
           <div class="mb-3">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Schriftgröße</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Schriftgröße</label>
             <div class="flex items-center">
               <input 
                 type="range" 
@@ -75,7 +75,7 @@
           </div>
           
           <div class="mb-3">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Zeilenhöhe</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Zeilenhöhe</label>
             <div class="flex items-center">
               <input 
                 type="range" 
@@ -90,7 +90,7 @@
           </div>
           
           <div class="mb-3">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Max. Zeilen pro Slide</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max. Zeilen pro Slide</label>
             <div class="flex items-center">
               <input 
                 type="range" 
@@ -105,10 +105,10 @@
           </div>
           
           <div class="mb-3">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Farbschema</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Farbschema</label>
             <select 
               v-model="projectionStore.theme"
-              class="w-full p-2 border rounded"
+              class="w-full p-2 border rounded dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
             >
               <option value="high-contrast">Hoher Kontrast (Schwarz/Weiß)</option>
               <option value="dark">Dunkel</option>
@@ -117,16 +117,16 @@
           </div>
           
           <div class="mb-3">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Projektor-Fenster</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Projektor-Fenster</label>
             <div class="grid grid-cols-2 gap-2 mb-2">
               <button 
-                class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                class="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
                 @click="setProjectorWindow('primary')"
               >
                 Hauptbildschirm
               </button>
               <button 
-                class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                class="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
                 @click="setProjectorWindow('secondary')"
               >
                 Zweiter Bildschirm
@@ -134,13 +134,13 @@
             </div>
             <div class="grid grid-cols-2 gap-2">
               <button 
-                class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                class="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
                 @click="setProjectorWindow('fullscreen')"
               >
                 Vollbild
               </button>
               <button 
-                class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                class="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
                 @click="setProjectorWindow('custom')"
               >
                 Benutzerdefiniert
